@@ -1,0 +1,6 @@
+public/
+node_modules/
+data/
+.env
+package.json
+package-lock.json

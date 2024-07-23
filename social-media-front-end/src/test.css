@@ -1,0 +1,130 @@
+body {
+  background-color: #eff2f6;
+}
+
+textarea {
+  resize: none;
+}
+
+a {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+p {
+  color: rgb(50, 50, 50);
+  margin: 0;
+}
+
+.wallpaper-gradient {
+  background: rgb(2, 0, 36);
+  background: linear-gradient(
+    90deg,
+    rgba(2, 0, 36, 1) 0%,
+    rgba(193, 231, 255, 1) 0%,
+    rgba(0, 200, 241, 1) 100%
+  );
+}
+
+@media (min-width: 1190px) {
+  .container {
+    max-width: 1190px;
+  }
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.wallpaper {
+  height: 75px;
+  width: 100%;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.avatar {
+  position: relative;
+  display: inline-block;
+  -o-object-fit: cover;
+  object-fit: cover;
+  flex-shrink: 0 !important;
+}
+
+.card-btn {
+  height: 23px;
+  width: 23px;
+  cursor: pointer;
+}
+
+.post-img {
+  width: 100%;
+  object-fit: cover;
+  max-height: 600px;
+  border-radius: 4px;
+}
+
+.icon-btn {
+  cursor: pointer;
+  background: #e6e9ed;
+  padding: 10px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fill-screen {
+  height: 80vh;
+  width: 100vw;
+}
+
+.form-container {
+  max-width: 330px;
+  padding: 1rem;
+}
+
+.dot::before {
+  content: "•";
+  color: inherit;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  opacity: 0.8;
+}
+
+.drop-box {
+  cursor: pointer;
+  font-size: 2rem;
+  color: #b3b3b3;
+  border: 3px dashed var(--bs-border-color) !important;
+  border-radius: 4px;
+  height: 100%;
+  padding: 3rem 0;
+}
+
+.drop-box-file {
+  width: 50%;
+  max-height: 80%;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.comment-field {
+  width: 300px;
+  height: 10px;
+}
+
+.comment-text {
+  background-color: rgb(238, 240, 242);
+  border-radius: 4px;
+  padding: 7px 10px;
+}
+
+.text-stop {
+  max-width: 150px;
+}
+
+small {
+  font-size: 12px;
+}
