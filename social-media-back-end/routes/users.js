@@ -45,12 +45,15 @@ router.post(
   asyncMiddleware(async (req, res) => {
     const { body } = req;
     const { error } = userJoiSchema.validate(body);
+
+    console.log(body);
+
     if (error)
       return res
         .status(400)
         .header("x-error-path", "username")
         .header("access-control-expose-headers", "x-error-path")
-        .send("Data is not valid.");
+        .send(error.details[0].message);
 
     const u = await User.findOne({ email: body.email });
     if (u)
@@ -72,6 +75,8 @@ router.post(
     const password = await bcrypt.hash(body.password, salt);
 
     const user = new User({
+      firstName: body.firstName,
+      lastName: body.lastName,
       username: body.username,
       email: body.email,
       password: password,
@@ -124,6 +129,7 @@ router.put(
       return res.status(403).send("Only the Owner can edit this Account.");
 
     const newAvatarPath = file && generatePath(file.path);
+    console.log(newAvatarPath);
     const avatarChanged = file && u.avatarPath !== newAvatarPath;
     if (u.avatarPath !== process.env.DEFAULT_AVATAR_PATH && avatarChanged)
       deleteFile(getNameFromPath(u.avatarPath));

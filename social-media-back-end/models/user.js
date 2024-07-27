@@ -5,6 +5,14 @@ const jwt = require("jsonwebtoken");
 const { Post } = require("./post");
 
 const userSchema = new mongoose.Schema({
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+  },
   email: {
     type: String,
     required: true,
@@ -37,6 +45,8 @@ userSchema.methods.generateAuthToken = async function () {
     {
       _id: this._id,
       posts,
+      firstName: this.firstName,
+      lastName: this.lastName,
       username: this.username,
       email: this.email,
       avatarPath: this.avatarPath,
@@ -47,6 +57,8 @@ userSchema.methods.generateAuthToken = async function () {
 };
 
 const userJoiSchema = Joi.object({
+  firstName: Joi.string().required().label("First Name"),
+  lastName: Joi.string().required().label("Last Name"),
   username: Joi.string().required().label("Username"),
   email: Joi.string()
     .email({ tlds: { allow: false } })

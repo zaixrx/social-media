@@ -1,6 +1,7 @@
 public/
 node_modules/
 data/
+config/
 .env
 package.json
 package-lock.json

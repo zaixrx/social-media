@@ -21,13 +21,15 @@ class EditPost extends Form {
   // Called once the model is shown.
   // Think of it as (async void componentDidMount())
   getData = async (post) => {
+    console.log(post);
+
     const { _image, _imagePath, _caption } = this.state.data;
     if (_image && _imagePath && _caption) return;
 
     try {
       let { data } = { ...this.state };
       const { imagePath, caption } = post;
-      const image = await getPostImage(imagePath);
+      const image = imagePath && (await getPostImage(imagePath));
 
       data = {
         caption,

@@ -8,19 +8,16 @@ const auth = require("../middleware/auth.js");
 const upload = require("../middleware/upload.js");
 const asyncMiddleware = require("../middleware/async.js");
 const validateObjectId = require("../middleware/validateObjectId.js");
-const {
-  Post,
-  postSchema,
-  privileged_put_postSchema,
-  unprivileged_put_postSchema,
-} = require("../models/post.js");
+const { Post, validatePost } = require("../models/post.js");
+const { commentValidate } = require("../models/comment.js");
 const { User } = require("../models/user.js");
-const { joiCommentSchema } = require("../models/comment.js");
 
 router.get(
   "/",
   asyncMiddleware(async (req, res) => {
-    const posts = await Post.find().populate("user", "-password -email");
+    const posts = await Post.find()
+      .populate("user", "-password -email")
+      .sort("-publishDate");
     return res.send(posts);
   })
 );
@@ -30,14 +27,15 @@ router.post(
   [auth, upload.single("image")],
   asyncMiddleware(async (req, res) => {
     const { body, file, user } = req;
-    const { error } = postSchema.validate(body);
-    if (error) return res.status(400).send(error.details[0].message);
+
+    if (!validatePost(body, res)) return;
 
     const post = new Post({
       user: user._id,
       caption: body.caption,
     });
     if (file) post.imagePath = generatePath(file.path);
+    console.log(post.imagePath);
 
     // I might implement a transaction for this later
     // But for now this will work
@@ -80,7 +78,7 @@ router.put(
   "/:_id",
   [validateObjectId, auth, upload.single("image")],
   asyncMiddleware(async (req, res) => {
-    const { body, user, file } = req;
+    const { body, user, file, headers } = req;
     const { _id } = req.params;
 
     let post = await Post.findById(_id);
@@ -89,80 +87,90 @@ router.put(
         .status(404)
         .send("The given id doesn't correspond to any Post.");
 
-    const commentID = req.headers["x-comment-id"];
-    if (commentID) {
-      const comment = post.comments.find((c) => c._id.toString() === commentID);
-      if (!comment)
-        return res
-          .status(404)
-          .send("The given id doesn't correspond to any Comment.");
+    const type = headers["x-type"];
 
-      if (comment.user._id.toString() !== req.user._id)
-        return res.status(403).send("Only the Owner can edit this Comment.");
+    switch (type) {
+      case "comment-post":
+        const comment = {
+          user: user._id,
+          value: body.comment,
+        };
 
-      const { error } = joiCommentSchema.validate(body);
-      if (error) return res.status(400).send(error.details[0].message);
+        if (!commentValidate(body, res)) return;
 
-      const index = post.comments.indexOf(comment);
-      post.comments[index].comment = body.comment;
-      await post.save();
-      return res.send(post);
-    }
+        const index = post.comments.length;
+        post.comments.push(comment);
+        res.send(post.comments[index]);
+        break;
 
-    const isOwner = user._id.toString() === post.user._id.toString();
-    const isEditPost = req.headers["x-edit-post"];
-    const schema =
-      isOwner && !isEditPost
-        ? privileged_put_postSchema
-        : unprivileged_put_postSchema;
+      case "comment-put":
+        const _commentID = headers["x-comment-id"];
+        const _comment = post.comments.find(
+          (c) => c._id.toString() === _commentID
+        );
 
-    const { error } = schema.validate(body);
-    if (error) return res.status(400).send(error.details[0].message);
+        if (!_comment) return res.status(404).send("Comment does not exists.");
 
-    if (isOwner && !isEditPost) {
-      const filePath = file && generatePath(file.path);
+        if (_comment.user._id.toString() !== req.user._id)
+          return res.status(403).send("Only the Owner can edit this Comment.");
 
-      const imageChanged = post.imagePath && post.imagePath !== filePath;
-      if (imageChanged) {
-        deleteFile(getNameFromPath(post.imagePath));
-      }
+        if (!commentValidate(body, res)) return;
 
-      post.caption = body.caption;
-      post.imagePath = file && filePath;
-    }
+        const _index = post.comments.indexOf(_comment);
+        post.comments[_index].value = body.comment;
+        res.send(_comment);
 
-    if (body.like !== undefined) {
-      const likedBefore = post.likes.find(
-        (like) => like.user.toString() === user._id
-      );
-      const like = {
-        user: user._id,
-        like: body.like,
-      };
+        break;
 
-      if (likedBefore) {
-        const index = post.likes.indexOf(likedBefore);
-        post.likes[index] = like;
-      } else {
-        post.likes.push(like);
-      }
-    }
+      case "post":
+        const isOwner = user._id === post.user._id.toString();
 
-    if (body.comment) {
-      const comment = {
-        user: user._id,
-        comment: body.comment,
-      };
+        if (!isOwner)
+          return res.status(400).send("Only the Owner can edit this Post.");
+        if (!validatePost(body, res)) return;
 
-      post.comments.push(comment);
+        const newImagePath = file && generatePath(file.path);
+        // If there is no image don't delete anything
+        // If there is an image and its not the same as the last one delete the last one.
+        const imageChanged = post.imagePath && post.imagePath !== newImagePath;
+        if (imageChanged) {
+          deleteFile(getNameFromPath(post.imagePath));
+        }
+
+        post.caption = body.caption;
+        post.imagePath = file && newImagePath;
+
+        res.send(post);
+        break;
+
+      case "post-like":
+        const likedBefore = post.likes.find(
+          (like) => like.user.toString() === user._id
+        );
+
+        const like = {
+          user: user._id,
+          like: body.like,
+        };
+
+        if (likedBefore) {
+          const index = post.likes.indexOf(likedBefore);
+          post.likes[index] = like;
+        } else {
+          post.likes.push(like);
+        }
+
+        res.send(like);
+        break;
+
+      default:
+        return res.status(400).send(`Invalid request type: ${type}`);
     }
 
     await post.save();
-    return res.send(post);
   })
 );
 
-let index = 0;
 router.delete("/:_id", [validateObjectId, auth], async (req, res) => {
   const post = await Post.findById(req.params._id);
 
@@ -219,5 +227,11 @@ router.delete("/:_id", [validateObjectId, auth], async (req, res) => {
 
   return res.send(post);
 });
+
+function validate(schema, value, res) {
+  const { error } = schema.validate(value);
+  res.status(400).send(error.details[0].message);
+  return error === undefined;
+}
 
 module.exports = router;

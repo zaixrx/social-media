@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { getUser } from "../services/user";
 import Friends from "../components/friendsBar";
 import Post from "../components/post";
 import EditUser from "../components/editUser";
 import EditPost from "../components/editPost";
-import { useParams } from "react-router-dom";
 
 function Profile({ currentUser }) {
   const [user, setUser] = useState({});
+  const [prevId, setPrevId] = useState("");
   const { _id } = useParams();
 
   useEffect(() => {
+    if (prevId === _id) return;
+
     (async () => {
       try {
         const { data: user } = await getUser(_id);
@@ -19,17 +22,20 @@ function Profile({ currentUser }) {
         alert(error.message);
       }
     })();
-  }, []);
 
-  let fnRefrence = undefined;
-  function getDataRefrence(functionRefrence) {
-    fnRefrence = functionRefrence;
+    setPrevId(_id);
+  }, [_id]);
+
+  let [asyncFunctionRefrence, setAsyncFunctionRefrence] = useState(
+    () => () => {}
+  );
+  function getDataRefrence(_asyncFunctionRefrence) {
+    setAsyncFunctionRefrence(() => _asyncFunctionRefrence);
   }
 
   function handlePostEdit(post) {
-    if (!fnRefrence) return;
-
-    fnRefrence(post).catch((err) => console.log(err.message));
+    if (!asyncFunctionRefrence) return;
+    asyncFunctionRefrence(post).catch((err) => console.log(err.message));
   }
 
   const isOwner = user._id === currentUser._id;
@@ -59,13 +65,13 @@ function Profile({ currentUser }) {
                 <div className="card-body d-flex align-items-start gap-4 pt-3 pb-4 px-4">
                   <img
                     src={user.avatarPath}
-                    height={125}
-                    width={125}
-                    style={{ marginTop: -50 }}
+                    height={100}
+                    width={100}
+                    style={{ marginTop: -40 }}
                     className="rounded-circle avatar border border-white border-2"
                   />
                   <div>
-                    <h3 className="mb-1">Koua Mohamed Anis</h3>
+                    <h4 className="mb-1">{`${user.firstName} ${user.lastName}`}</h4>
                     <div className="d-flex">
                       <span className="fw-bold">@{user.username}</span>
                       <p className="mb-0 dot">School Principal</p>

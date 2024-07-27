@@ -8,11 +8,9 @@ const Input = ({ name, label, error, ...rest }) => {
   return (
     <div className="form-floating mb-2">
       <input
-        className={inputClasses}
-        id={name}
         name={name}
         placeholder={label}
-        autoComplete="true"
+        className={inputClasses}
         {...rest}
       />
       <label htmlFor={name}>{label}</label>

@@ -30,7 +30,7 @@ function NavBar({ user }) {
       <div className="container">
         <div className="d-flex align-items-center justify-content-between">
           <Link className="mb-0 me-3" to="/">
-            HS-APP
+            HS
           </Link>
           <DropDownSearchBox
             onChange={handleUserSearchChange}

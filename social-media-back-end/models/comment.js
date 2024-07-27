@@ -11,7 +11,7 @@ const commentSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  comment: {
+  value: {
     type: String,
     required: true,
   },
@@ -21,5 +21,11 @@ const commentSchema = new mongoose.Schema({
   },
 });
 
-exports.joiCommentSchema = joiCommentSchema;
+function commentValidate(value, res) {
+  const { error } = joiCommentSchema.validate(value);
+  if (error) res.status(400).send(error.details[0].message);
+  return error === undefined;
+}
+
 exports.commentSchema = commentSchema;
+exports.commentValidate = commentValidate;

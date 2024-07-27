@@ -21,7 +21,7 @@ const DropDownSearchBox = ({ items, placeholder, className, onChange }) => {
         />
         {isValid() && (
           <ul className="dropdown-menu text-small">
-            {items?.map((item) => (
+            {items.map((item) => (
               <li key={++itemsCount}>
                 <NavLink className="dropdown-item" to={item.to}>
                   {item.text}

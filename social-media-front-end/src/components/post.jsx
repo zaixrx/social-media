@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router-dom";
 import {
-  commentPost,
   deletePost,
-  deletePostComment,
   likePost,
-  putPostComment,
+  publishComment,
+  editComment,
+  deleteComment,
 } from "../services/posts";
 import Comment from "./comment";
 import { getToken } from "../utils/token";
@@ -28,7 +28,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
     const liked = result && result.like;
     const likesCount = likes.filter((like) => like.like).length;
 
-    setLikes({ liked, likesCount });
+    setLikes({ liked, count: likesCount });
   }, []);
 
   async function handleDelete() {
@@ -62,33 +62,17 @@ function Post({ currentUser, user, post, onPostEdit }) {
     if (currentTarget.value.trim() === "") return;
 
     try {
-      await commentPost(currentTarget.value, post._id, getToken());
+      const { data: receivedComment } = await publishComment(
+        currentTarget.value,
+        post._id,
+        getToken()
+      );
 
-      const _comments = { ...comments };
-      _comments.push({ user: currentUser._id, comment: currentTarget.value });
+      const _comments = [...comments];
+      _comments.push(receivedComment);
       setComments(_comments);
+
       currentTarget.value = "";
-    } catch (error) {
-      if (error.response) console.log(error.response.data);
-      alert(error.message);
-    }
-  }
-
-  async function handleCommentDelete(_id) {
-    if (!_id) return;
-
-    const comment = comments.find((c) => {
-      return c._id === _id;
-    });
-
-    if (!comment) throw Error("(Comment[]).Contains(comment) => false");
-    const index = comments.indexOf(comment);
-
-    try {
-      await deletePostComment(_id, post._id, getToken());
-      const _comments = { ...comments };
-      _comments.splice(index, 1);
-      setComments(_comments);
     } catch (error) {
       if (error.response) console.log(error.response.data);
       alert(error.message);
@@ -106,11 +90,15 @@ function Post({ currentUser, user, post, onPostEdit }) {
     const index = comments.indexOf(comment);
 
     try {
-      await putPostComment(value, _id, post._id, getToken());
+      const { data: receivedComment } = await editComment(
+        value,
+        _id,
+        post._id,
+        getToken()
+      );
 
-      comment.comment = value;
-      const _comments = { ...comments };
-      _comments[index] = comment;
+      const _comments = [...comments];
+      _comments[index] = receivedComment;
       setComments(_comments);
 
       return true;
@@ -120,6 +108,26 @@ function Post({ currentUser, user, post, onPostEdit }) {
     }
 
     return false;
+  }
+
+  async function handleCommentDelete(_id) {
+    if (!_id) return;
+
+    const comment = comments.find((c) => {
+      return c._id === _id;
+    });
+
+    if (!comment) throw Error("(Comment[]).Contains(comment) => false");
+
+    try {
+      await deleteComment(_id, post._id, getToken());
+      const _comments = [...comments];
+      _comments.splice(_comments.indexOf(comment), 1);
+      setComments(_comments);
+    } catch (error) {
+      if (error.response) console.log(error.response.data);
+      alert(error.message);
+    }
   }
 
   return (
@@ -225,17 +233,15 @@ function Post({ currentUser, user, post, onPostEdit }) {
                 placeholder="Add a comment..."
               />
             </div>
-            {comments.map((c) => {
-              return (
-                <Comment
-                  key={c._id}
-                  data={c}
-                  isOwner={currentUser._id === c.user}
-                  onCommentDelete={handleCommentDelete}
-                  onCommentEdit={handleCommentEdit}
-                />
-              );
-            })}
+            {comments.map((c) => (
+              <Comment
+                key={c._id}
+                comment={c}
+                isOwner={currentUser._id === c.user}
+                onCommentEdit={handleCommentEdit}
+                onCommentDelete={handleCommentDelete}
+              />
+            ))}
           </div>
         </div>
       </div>

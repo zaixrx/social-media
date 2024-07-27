@@ -19,6 +19,7 @@ export function editPost(_id, data, token) {
   return axios.put(apiEndpoint + _id, data, {
     headers: {
       "x-auth-token": token,
+      "x-type": "post",
     },
   });
 }
@@ -35,38 +36,39 @@ export function likePost(like, _id, token) {
   return axios.put(
     apiEndpoint + _id,
     { like },
-    { headers: { "x-auth-token": token, "x-edit-post": true } }
+    { headers: { "x-auth-token": token, "x-type": "post-like" } }
   );
 }
 
-export function commentPost(comment, _id, token) {
+export function publishComment(comment, _id, token) {
   return axios.put(
     apiEndpoint + _id,
     { comment },
-    { headers: { "x-auth-token": token, "x-edit-post": true } }
+    { headers: { "x-auth-token": token, "x-type": "comment-post" } }
   );
 }
 
-export function deletePostComment(_id, _postId, token) {
-  return axios.delete(apiEndpoint + _postId, {
-    headers: {
-      "x-auth-token": token,
-      "x-comment-id": _id,
-    },
-  });
-}
-
-export function putPostComment(comment, _id, _postId, token) {
+export function editComment(comment, _id, _postId, token) {
   return axios.put(
     apiEndpoint + _postId,
     { comment },
     {
       headers: {
         "x-auth-token": token,
+        "x-type": "comment-put",
         "x-comment-id": _id,
       },
     }
   );
+}
+
+export function deleteComment(_id, _postId, token) {
+  return axios.delete(apiEndpoint + _postId, {
+    headers: {
+      "x-auth-token": token,
+      "x-comment-id": _id,
+    },
+  });
 }
 
 export async function getPostImage(path) {

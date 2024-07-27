@@ -1,61 +1,55 @@
-import React, { Component, createRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { getUser } from "../services/user";
 import { Link } from "react-router-dom";
 import DetailsDropDown from "../common/detailsDropDown";
 
-class Comment extends Component {
-  state = {
-    _id: "",
-    user: {},
-    editMode: false,
-    editValue: "",
-  };
+function Comment({ comment, onCommentEdit, onCommentDelete, isOwner }) {
+  const [user, setUser] = useState({});
+  const [editMode, setEditMode] = useState(false);
+  const [editValue, setEditValue] = useState("");
 
-  editInput = createRef(null);
+  const editInput = useRef(null);
 
-  async componentDidMount() {
-    const { user: userID, _id } = this.props.data;
-    if (!userID) return;
+  useEffect(() => {
+    (async () => {
+      const { user: userID } = comment;
+      if (!userID) return;
 
-    try {
-      const { data: user } = await getUser(userID);
-      if (user) this.setState({ user, _id });
-    } catch {}
+      try {
+        const { data: user } = await getUser(userID);
+        setUser(user);
+      } catch (error) {
+        if (error.response) console.log(error.response.data);
+        alert(`Can't get comment.user: ${error.message}`);
+      }
+    })();
+  }, []);
+
+  function triggerEditMode() {
+    const _editMode = !editMode;
+    editInput.current.value = comment.value;
+    setEditMode(_editMode);
   }
 
-  triggerEditMode = () => {
-    const editMode = !this.state.editMode;
-    this.editInput.current.value = this.props.data.comment;
-    this.setState({ editMode });
-  };
-
-  handleEditInputKeyPress = ({ keyCode }) => {
-    const { editMode, editValue } = this.state;
+  function handleEditInputKeyPress({ keyCode }) {
     if (!editMode || keyCode !== 13) return;
-    const { data } = this.props;
-    const { onCommentDelete, onCommentEdit } = this.props;
 
     if (editValue.trim() === "") {
-      onCommentDelete(data._id);
+      onCommentDelete(comment._id);
     } else {
-      if (onCommentEdit(data._id, editValue)) this.triggerEditMode();
+      if (onCommentEdit(comment._id, editValue)) triggerEditMode();
     }
-  };
+  }
 
-  handleEditInputChange = ({ target }) => {
-    const { editMode } = this.state;
+  function handleEditInputChange({ target }) {
     if (!editMode) return;
+    setEditValue(target.value);
+  }
 
-    this.setState({ editValue: target.value });
-  };
+  const userProfileURL = `/profile/${user._id}`;
 
-  render() {
-    const { user, editMode } = this.state;
-    const { data, onCommentDelete, isOwner } = this.props;
-
-    const userProfileURL = `/profile/${user._id}`;
-
-    return (
+  return (
+    comment && (
       <div className="d-flex gap-2 border-top py-3">
         <Link to={userProfileURL}>
           <img
@@ -74,28 +68,30 @@ class Comment extends Component {
             placeholder="Edit this Comment..."
             style={{ display: editMode ? "block" : "none" }}
             className="form-control shadow-none"
-            onKeyDown={this.handleEditInputKeyPress}
-            onChange={this.handleEditInputChange}
-            ref={this.editInput}
+            onKeyDown={handleEditInputKeyPress}
+            onChange={handleEditInputChange}
+            ref={editInput}
           />
-          <p style={{ display: editMode ? "none" : "block" }}>{data.comment}</p>
+          <p style={{ display: editMode ? "none" : "block" }}>
+            {comment.value}
+          </p>
         </div>
         {isOwner && (
           <DetailsDropDown>
-            <div className="dropdown-item" onClick={this.triggerEditMode}>
+            <div className="dropdown-item" onClick={triggerEditMode}>
               Edit
             </div>
             <div
               className="dropdown-item"
-              onClick={() => onCommentDelete(data._id)}
+              onClick={() => onCommentDelete(comment._id)}
             >
               Delete
             </div>
           </DetailsDropDown>
         )}
       </div>
-    );
-  }
+    )
+  );
 }
 
 export default Comment;

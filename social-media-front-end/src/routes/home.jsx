@@ -36,13 +36,17 @@ function Home({ user }) {
     })();
   }, []);
 
-  let asyncFunctionRefrence = undefined;
+  // Frick react
+  let [asyncFunctionRefrence, setAsyncFunctionRefrence] = useState(
+    () => () => {}
+  );
   function getDataRefrence(_asyncFunctionRefrence) {
-    asyncFunctionRefrence = _asyncFunctionRefrence;
+    setAsyncFunctionRefrence(() => _asyncFunctionRefrence);
   }
 
   function handlePostEdit(post) {
-    asyncFunctionRefrence(post).catch((err) => console.log(err.message));
+    if (!asyncFunctionRefrence) return;
+    asyncFunctionRefrence(post).catch((error) => console.log(error.message));
   }
 
   return (

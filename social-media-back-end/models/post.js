@@ -3,23 +3,14 @@ const Joi = require("joi");
 const { commentSchema } = require("./comment");
 const { likeSchema } = require("./like");
 
-const privileged_put_postSchema = Joi.object({
-  caption: Joi.string().required(),
-  image: Joi.any(),
-  like: Joi.boolean(),
-});
-const unprivileged_put_postSchema = Joi.object({
-  like: Joi.boolean(),
-  comment: Joi.string().min(1).max(255),
-});
-
-const postSchema = Joi.object({
+const postJoiSchema = Joi.object({
   image: Joi.any(),
   caption: Joi.string().required(),
   publishDate: Joi.date(),
+  like: Joi.boolean(),
 });
 
-const postModelSchema = new mongoose.Schema({
+const postSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -39,10 +30,14 @@ const postModelSchema = new mongoose.Schema({
   comments: [commentSchema],
 });
 
-const Post = mongoose.model("Post", postModelSchema);
+const Post = mongoose.model("Post", postSchema);
+
+function validatePost(value, res) {
+  const { error } = postJoiSchema.validate(value);
+  if (error) res.status(400).send(error.details[0].message);
+  return error === undefined;
+}
 
 exports.Post = Post;
 exports.postSchema = postSchema;
-exports.postModelSchema = postModelSchema;
-exports.privileged_put_postSchema = privileged_put_postSchema;
-exports.unprivileged_put_postSchema = unprivileged_put_postSchema;
+exports.validatePost = validatePost;
