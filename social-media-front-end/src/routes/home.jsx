@@ -37,28 +37,28 @@ function Home({ user }) {
   }, []);
 
   // Frick react
-  let [asyncFunctionRefrence, setAsyncFunctionRefrence] = useState(
+  let [asyncFunctionReference, setAsyncFunctionReference] = useState(
     () => () => {}
   );
-  function getDataRefrence(_asyncFunctionRefrence) {
-    setAsyncFunctionRefrence(() => _asyncFunctionRefrence);
+  function getDataReference(_asyncFunctionRefrence) {
+    setAsyncFunctionReference(() => _asyncFunctionRefrence);
   }
 
   function handlePostEdit(post) {
-    if (!asyncFunctionRefrence) return;
-    asyncFunctionRefrence(post).catch((error) => console.log(error.message));
+    if (!asyncFunctionReference) return;
+    asyncFunctionReference(post).catch((error) => console.log(error.message));
   }
 
   return (
     <>
-      <EditPost getDataRefrence={getDataRefrence} user={user} />
+      <EditPost getDataReference={getDataReference} user={user} />
       <div className="container my-3">
         <div className="row g-4">
           <div className="col-lg-3 section">
             <ProfileBar user={user} />
           </div>
           <div className="col-md-8 col-lg-6 vstack gap-4">
-            {user._id && <SharePost user={user} />}
+            <SharePost user={user} />
             {posts.map((post) => {
               return (
                 <Post
@@ -72,7 +72,11 @@ function Home({ user }) {
             })}
           </div>
           <div className="col-lg-3 section">
-            <Friends />
+            <Friends
+              user={user}
+              followers={user.followers}
+              following={user.following}
+            />
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import DropDownSearchBox from "../common/DropDownSearchBox";
 import { searchUsers } from "../services/user";
+import DropDownList from "../common/DropDownList";
 
 function NavBar({ user }) {
   const [items, setItems] = useState([]);
@@ -13,12 +14,15 @@ function NavBar({ user }) {
     try {
       const { data: queriedUsers } = await searchUsers(target.value);
       const items = [];
-      for (let i = 0; i < queriedUsers.length; i++) {
+      queriedUsers.forEach((_user) => {
+        if (_user._id === user._id) return;
+
         items.push({
-          text: queriedUsers[i].username,
-          to: `/profile/${queriedUsers[i]._id}`,
+          text: _user.username,
+          avatarPath: _user.avatarPath,
+          to: `/profile/${_user._id}`,
         });
-      }
+      });
       setItems(items);
     } catch (error) {
       console.log("Failed to load Users:", error);
@@ -32,43 +36,55 @@ function NavBar({ user }) {
           <Link className="mb-0 me-3" to="/">
             HS
           </Link>
-          <DropDownSearchBox
-            onChange={handleUserSearchChange}
-            className="me-3"
-            items={items}
-            placeholder={"Search Users..."}
-          />
+          {user._id && (
+            <DropDownSearchBox
+              onChange={handleUserSearchChange}
+              className="me-3"
+              placeholder="Search Users..."
+            >
+              {items.map((item, index) => (
+                <li key={index}>
+                  <Link
+                    className="dropdown-item align-items-center d-flex gap-2"
+                    to={item.to}
+                  >
+                    <img
+                      src={item.avatarPath}
+                      height={35}
+                      width={35}
+                      className="avatar rounded-circle"
+                    />
+                    {item.text}
+                  </Link>
+                </li>
+              ))}
+            </DropDownSearchBox>
+          )}
           {user._id ? (
             <div className="text-end">
-              <div className="dropdown text-end">
-                <a
-                  className="d-block link-body-emphasis text-decoration-none dropdown-toggle"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
+              <DropDownList
+                expanderID="profileListCard"
+                expanderBody={
                   <img
                     src={user.avatarPath}
                     width="32"
                     height="32"
                     className="avatar rounded-circle"
                   />
-                </a>
-                <ul className="dropdown-menu text-small">
-                  <li>
-                    <Link className="dropdown-item" to={`/profile/${user._id}`}>
-                      Profile
-                    </Link>
-                  </li>
-                  <li>
-                    <hr className="dropdown-divider" />
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/signout">
-                      Sign out
-                    </Link>
-                  </li>
-                </ul>
-              </div>
+                }
+                className="d-block link-body-emphasis text-decoration-none dropdown-toggle"
+              >
+                <li>
+                  <Link className="dropdown-item" to={`/profile/${user._id}`}>
+                    Profile
+                  </Link>
+                </li>
+                <li>
+                  <Link className="dropdown-item" to="/signout">
+                    Sign out
+                  </Link>
+                </li>
+              </DropDownList>
             </div>
           ) : (
             <div className="text-end">

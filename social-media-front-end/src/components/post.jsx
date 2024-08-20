@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router-dom";
 import {
@@ -10,10 +10,12 @@ import {
 } from "../services/posts";
 import Comment from "./comment";
 import { getToken } from "../utils/token";
+import { getDateString } from "../utils/time";
 
 function Post({ currentUser, user, post, onPostEdit }) {
   const [likes, setLikes] = useState({ liked: false, count: "" });
   const [comments, setComments] = useState([]);
+  const commentInput = useRef();
 
   useEffect(() => {
     const { comments, likes } = post;
@@ -55,15 +57,19 @@ function Post({ currentUser, user, post, onPostEdit }) {
     }
   }
 
-  async function handleCommentSend({ keyCode, currentTarget }) {
+  async function handleCommentSend({ key }) {
     // Enter Key
-    if (keyCode !== 13) return;
-    if (!currentTarget) return;
-    if (currentTarget.value.trim() === "") return;
+    if (key !== "Enter") return;
+    await localCommentSend();
+  }
+
+  async function localCommentSend() {
+    const comment = commentInput.current.value;
+    if (!comment.trim()) return;
 
     try {
       const { data: receivedComment } = await publishComment(
-        currentTarget.value,
+        comment,
         post._id,
         getToken()
       );
@@ -72,7 +78,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
       _comments.push(receivedComment);
       setComments(_comments);
 
-      currentTarget.value = "";
+      commentInput.current.value = "";
     } catch (error) {
       if (error.response) console.log(error.response.data);
       alert(error.message);
@@ -148,7 +154,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
               <div className="nav nav-divider">
                 <h6 className="nav-item card-title mb-0">@{user.username}</h6>
                 <span className="post-date nav-item small dot">
-                  {post.publishDate.slice(0, 10)}
+                  {getDateString(new Date(post.publishDate))}
                 </span>
               </div>
               <p className="mb-0 small">Caption...</p>
@@ -226,12 +232,18 @@ function Post({ currentUser, user, post, onPostEdit }) {
                 src={currentUser.avatarPath}
                 className="avatar rounded-circle"
               />
-              <input
-                id="input"
-                onKeyDown={handleCommentSend}
-                className="form-control pe-5 bg-light shadow-none"
-                placeholder="Add a comment..."
-              />
+              <div className="input-group">
+                <input
+                  id="input"
+                  ref={commentInput}
+                  onKeyDown={handleCommentSend}
+                  className="form-control pe-5 bg-light shadow-none"
+                  placeholder="Add a comment..."
+                />
+                <button className="btn btn-primary" onClick={localCommentSend}>
+                  <FontAwesomeIcon icon="fa-regular fa-paper-plane" />
+                </button>
+              </div>
             </div>
             {comments.map((c) => (
               <Comment

@@ -1,6 +1,7 @@
 import React from "react";
 import Form from "../common/Form/Form";
 import Joi from "joi";
+import { Link } from "react-router-dom";
 import { authUser } from "../services/auth.js";
 
 class LoginForm extends Form {
@@ -54,6 +55,7 @@ class LoginForm extends Form {
             {this.renderInput("email", "Email", "text")}
             {this.renderInput("password", "Password", "password")}
             {this.renderCheckBox("rememberMe", "Remember me")}
+          <Link to="/signup">Do not have an Account?</Link>
             {this.renderButton("Sign in")}
           </form>
         </main>

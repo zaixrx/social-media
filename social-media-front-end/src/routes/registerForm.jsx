@@ -1,6 +1,7 @@
 import React from "react";
 import Form from "../common/Form/Form";
 import Joi from "joi";
+import { Link } from "react-router-dom";
 import { setToken } from "../utils/token.js";
 import { registerUser } from "../services/register.js";
 
@@ -60,7 +61,7 @@ class RegisterForm extends Form {
         password,
       });
       setToken(response.headers["x-auth-token"]);
-      this.props.history.replace("/");
+      window.location = "/";
     } catch ({ response }) {
       if (response && response.status === 400) {
         const errors = { ...this.state.errors };
@@ -87,6 +88,7 @@ class RegisterForm extends Form {
               "password"
             )}
             {this.renderCheckBox("agreement", "Agree to terms and conditions")}
+            <Link to="/signin">Already have an Account?</Link>
             {this.renderButton("Sign up")}
           </form>
         </main>

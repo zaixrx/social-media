@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
 import { getUser } from "../services/user";
 import { Link } from "react-router-dom";
-import DetailsDropDown from "../common/detailsDropDown";
+import { getDateString } from "../utils/time";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import DetailsDropDown from "./detailsDropDown";
 
 function Comment({ comment, onCommentEdit, onCommentDelete, isOwner }) {
   const [user, setUser] = useState({});
@@ -31,8 +33,13 @@ function Comment({ comment, onCommentEdit, onCommentDelete, isOwner }) {
     setEditMode(_editMode);
   }
 
-  function handleEditInputKeyPress({ keyCode }) {
-    if (!editMode || keyCode !== 13) return;
+  function handleEditInputKeyPress({ key }) {
+    if (key !== "Enter") return;
+    localEditComment();
+  }
+
+  function localEditComment() {
+    if (!editMode) return;
 
     if (editValue.trim() === "") {
       onCommentDelete(comment._id);
@@ -60,24 +67,38 @@ function Comment({ comment, onCommentEdit, onCommentDelete, isOwner }) {
           />
         </Link>
         <div className="comment-text">
-          <Link className="fs-6 fw-bold text-black" to={userProfileURL}>
-            @{user.username}
-          </Link>
-          <input
-            type="text"
-            placeholder="Edit this Comment..."
-            style={{ display: editMode ? "block" : "none" }}
-            className="form-control shadow-none"
-            onKeyDown={handleEditInputKeyPress}
-            onChange={handleEditInputChange}
-            ref={editInput}
-          />
+          <div className="d-flex align-items-center">
+            <Link className="fs-6 fw-bold text-black" to={userProfileURL}>
+              @{user.username}
+            </Link>
+            <small className="dot">
+              {getDateString(new Date(comment.publishDate))}
+            </small>
+          </div>
+          <div className="input-group">
+            <input
+              type="text"
+              style={{ display: editMode ? "block" : "none" }}
+              placeholder="Edit this Comment..."
+              className="form-control shadow-none"
+              onKeyDown={handleEditInputKeyPress}
+              onChange={handleEditInputChange}
+              ref={editInput}
+            />
+            <button
+              className="btn btn-primary"
+              style={{ display: editMode ? "block" : "none" }}
+              onClick={localEditComment}
+            >
+              <FontAwesomeIcon icon="fa-regular fa-paper-plane" />
+            </button>
+          </div>
           <p style={{ display: editMode ? "none" : "block" }}>
             {comment.value}
           </p>
         </div>
         {isOwner && (
-          <DetailsDropDown>
+          <DetailsDropDown expanderID="commentDetailsCard">
             <div className="dropdown-item" onClick={triggerEditMode}>
               Edit
             </div>

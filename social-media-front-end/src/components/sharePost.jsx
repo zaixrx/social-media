@@ -2,6 +2,7 @@ import React, { createRef } from "react";
 import Form from "../common/Form/Form";
 import { publishPost } from "../services/posts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { getToken } from "../utils/token.js";
 
 class SharePost extends Form {
   errorValidation = false;
@@ -16,11 +17,9 @@ class SharePost extends Form {
   async doSubmit() {
     const { image, caption } = this.state.data;
 
-    const token = localStorage.getItem("token");
+    const token = getToken();
 
-    if (!token) return this.props.history.push("/signin");
-
-    if (caption.trim() === "") return alert("Caption must not be empty.");
+    if (caption.trim() === "" && !image.name) return;
 
     let formData = new FormData();
     formData.append("caption", caption);

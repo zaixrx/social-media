@@ -1,30 +1,61 @@
-import React, { createRef } from "react";
-import Form from "../common/Form/Form";
-import { editUser, regenerateAuthToken } from "../services/user";
-import { getToken, setToken } from "../utils/token";
+import React, { useState, useEffect, useRef } from "react";
+import PopUp from "../common/PopUp.jsx";
+import FormInput from "../common/new/FormInput.jsx";
+import FormTextArea from "../common/new/FormTextArea.jsx";
+import { editUser } from "../services/user.js";
+import { setToken } from "../utils/token.js";
 
-class EditUser extends Form {
-  errorValidation = false;
-  state = {
-    data: {
-      url: "",
-      avatar: {},
-    },
-  };
+function EditUser({ user }) {
+  const avatarFileSelect = useRef();
 
-  fileInputRef = createRef(null);
+  const [avatar, setAvatar] = useState({});
+  const [avatarPath, setAvatarPath] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [bio, setBio] = useState("");
 
-  async doSubmit() {
-    const { avatar } = this.state.data;
-    const { _id } = this.props.user;
+  useEffect(() => {
+    setFirstName(user.firstName);
+    setLastName(user.lastName);
+    setBio(user.bio);
+    setAvatarPath(user.avatarPath);
+  }, []);
 
-    const data = new FormData();
-    data.append("avatar", avatar);
+  function handleAvatarChange({ target }) {
+    const image = target.files[0];
+    if (!image) return;
 
     try {
-      await editUser(_id, data);
-      const { data: token } = await regenerateAuthToken(getToken());
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        setAvatarPath(e.target.result);
+        setAvatar(target.files[0]);
+      };
+
+      reader.readAsDataURL(image);
+    } catch {}
+  }
+
+  async function handleSubmit() {
+    if (
+      firstName === user.firstName &&
+      lastName === user.lastName &&
+      bio === user.bio &&
+      avatarPath === user.avatarPath
+    )
+      return window.location.reload();
+
+    let formData = new FormData();
+    formData.append("firstName", firstName);
+    formData.append("lastName", lastName);
+    formData.append("bio", bio);
+    formData.append("avatar", avatar);
+
+    try {
+      const { data: token } = await editUser(user._id, formData);
       setToken(token);
+
       window.location.reload();
     } catch (error) {
       if (error.response) console.log(error.response.data);
@@ -32,84 +63,59 @@ class EditUser extends Form {
     }
   }
 
-  componentDidMount() {
-    let { avatarPath } = this.props.user;
-    const data = { ...this.state.data };
-
-    if (avatarPath) {
-      data.url = avatarPath;
-    } else {
-      data.url =
-        "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
-    }
-
-    this.setState({ data });
-  }
-
-  handleFileChange = ({ currentTarget: fileInput }) => {
-    if (!fileInput.files[0]) return;
-
-    const data = { ...this.state.data };
-    const reader = new FileReader();
-
-    try {
-      reader.onload = ({ target }) => {
-        data.avatar = fileInput.files[0];
-        data.url = target.result;
-
-        this.setState({ data });
-      };
-
-      reader.readAsDataURL(fileInput.files[0]);
-    } catch (e) {}
-  };
-
-  render() {
-    const { url } = this.state.data;
-
-    return (
-      <div className="modal fade" id="editUserModal">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h1 className="modal-title fs-5">Profile Photo</h1>
-              <button
-                type="button"
-                className="btn-close shadow-none"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              />
-            </div>
-            <div className="modal-body">
-              <div className="d-flex justify-content-center align-items-center">
-                <img
-                  src={url}
-                  height={200}
-                  width={200}
-                  className="object-fit-cover border rounded-circle"
-                />
-              </div>
-            </div>
-            <div className="modal-footer d-flex justify-content-between">
-              {this.renderButton("Submit Changes")}
-              <button
-                className="btn btn-primary py-2"
-                onClick={() => this.fileInputRef.current.click()}
-              >
-                Edit Avatar
-              </button>
-              <input
-                type="file"
-                onChange={this.handleFileChange}
-                ref={this.fileInputRef}
-                style={{ display: "none" }}
-              />
-            </div>
+  return (
+    <PopUp
+      modalId="editUserModal"
+      headerLabel="Edit Your Profile"
+      onSubmit={handleSubmit}
+    >
+      <form className="d-flex flex-column gap-3">
+        <div className="d-flex align-items-center gap-3">
+          <img
+            src={avatarPath}
+            className="avatar rounded-circle clickable"
+            height={80}
+            width={80}
+            onClick={() => avatarFileSelect.current.click()}
+          />
+          <input
+            type="file"
+            ref={avatarFileSelect}
+            style={{ display: "none" }}
+            onChange={handleAvatarChange}
+          />
+          <div>
+            <h3 className="m-0">{user.username}</h3>
+            <p>{user.role}</p>
           </div>
         </div>
-      </div>
-    );
-  }
+        <div className="row g-3">
+          <div className="col">
+            <FormInput
+              label="First Name"
+              validationPath="firstName"
+              setter={setFirstName}
+              value={firstName}
+            />
+          </div>
+          <div className="col">
+            <FormInput
+              label="Last Name"
+              validationPath="lastName"
+              setter={setLastName}
+              value={lastName}
+            />
+          </div>
+        </div>
+        <FormTextArea
+          label="Bio"
+          validationPath="bio"
+          setter={setBio}
+          value={bio}
+        />
+      </form>
+    </PopUp>
+  );
 }
 
 export default EditUser;

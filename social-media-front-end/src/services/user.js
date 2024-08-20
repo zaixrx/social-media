@@ -12,11 +12,11 @@ export function searchUsers(query) {
   return axios.get(API_ENDPOINT, { headers: { "x-query": query } });
 }
 
-export function editUser(_id, data) {
+export function editUser(_id, data, type = "default") {
   const token = getToken();
   if (!token) return null;
   return axios.put(API_ENDPOINT + _id, data, {
-    headers: { "x-auth-token": token },
+    headers: { "x-auth-token": token, "x-type": type },
   });
 }
 
@@ -41,4 +41,8 @@ export function regenerateAuthToken() {
     }
     alert(error.message);
   }
+}
+
+export function validateUserData(username, email) {
+  return axios.post(API_ENDPOINT + "validate", { username, email });
 }

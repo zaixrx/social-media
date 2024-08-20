@@ -1,19 +1,30 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from "react";
 import Friend from "./friend.jsx";
 
-class Friends extends Component {
-  render() {
-    return (
-      <div className="card overflow-hidden">
-        <div className="card-body bg-white">
-          <h5 className="pb-3">People you may know</h5>
-          <Friend />
-          <Friend />
-          <Friend />
-        </div>
-      </div>
-    );
-  }
-}
+const FriendsBar = ({ followers, following }) => {
+  const [users, setUsers] = useState([]);
 
-export default Friends;
+  useEffect(() => {
+    if (!followers || !following) return;
+
+    let result = followers.filter((follower) => !following.includes(follower));
+
+    setUsers(result);
+  }, [followers, following]);
+
+  return (
+    followers &&
+    following && (
+      <div className="card p-3 d-flex gap-3 overflow-hidden">
+        <span className="fs-5">You may know</span>
+        {users.length === 0
+          ? followers.length === 0
+            ? "You have no followers"
+            : "It looks like that you know all you're followers"
+          : users.map((user) => <Friend key={user} user={user} />)}
+      </div>
+    )
+  );
+};
+
+export default FriendsBar;

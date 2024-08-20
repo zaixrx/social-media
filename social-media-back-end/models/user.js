@@ -26,12 +26,27 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
+    lowercase: true,
   },
   posts: {
     type: [mongoose.Schema.Types.ObjectId],
     ref: "Post",
   },
   avatarPath: String,
+  followers: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "User",
+  },
+  following: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "User",
+  },
+  role: {
+    type: String,
+    required: true,
+    default: "Member",
+  },
+  bio: String,
 });
 
 userSchema.methods.generateAuthToken = async function () {
@@ -50,6 +65,10 @@ userSchema.methods.generateAuthToken = async function () {
       username: this.username,
       email: this.email,
       avatarPath: this.avatarPath,
+      followers: this.followers,
+      following: this.following,
+      role: this.role,
+      bio: this.bio,
     },
     config.get("jwtPrivateKey"),
     { noTimestamp: true }
@@ -59,12 +78,20 @@ userSchema.methods.generateAuthToken = async function () {
 const userJoiSchema = Joi.object({
   firstName: Joi.string().required().label("First Name"),
   lastName: Joi.string().required().label("Last Name"),
-  username: Joi.string().required().label("Username"),
+  username: Joi.string().required().label("Username").lowercase().trim(),
   email: Joi.string()
     .email({ tlds: { allow: false } })
     .required()
     .label("Email"),
-  password: Joi.string().required().label("Password"),
+  password: Joi.string()
+    .required()
+    .label("Password")
+    .min(6)
+    .max(32)
+    .pattern(/(?=(?:.*[0-9]){1,16}).+/)
+    .messages({
+      "string.pattern.base": "{#label} must contain at least one number",
+    }),
 });
 
 const userAuthJoiSchema = Joi.object({
@@ -76,17 +103,30 @@ const userAuthJoiSchema = Joi.object({
 });
 
 const put_userJoiSchema = Joi.object({
-  username: Joi.string().label("Username"),
-  email: Joi.string()
-    .email({ tlds: { allow: false } })
-    .label("Email"),
-  password: Joi.string().label("Password"),
-  avatarPath: Joi.string().label("Avatar"),
+  firstName: Joi.string().label("First Name"),
+  lastName: Joi.string().label("Last Name"),
+  username: Joi.string().label("Username").lowercase().trim(),
+  bio: Joi.string().min(1).max(64),
+  password: Joi.string()
+    .label("Password")
+    .min(6)
+    .max(32)
+    .pattern(/(?=(?:.*[0-9]){1,16}).+/)
+    .messages({
+      "string.pattern.base": "{#label} must contain at least one number",
+    }),
+  avatar: Joi.any().label("Avatar"),
 });
 
 const User = mongoose.model("User", userSchema);
 
+async function getUser(_id) {
+  const user = await User.findById(_id);
+  return user;
+}
+
 exports.User = User;
+exports.getUser = getUser;
 exports.userSchema = userSchema;
 exports.userJoiSchema = userJoiSchema;
 exports.userAuthJoiSchema = userAuthJoiSchema;

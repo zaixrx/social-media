@@ -2,7 +2,7 @@ import React from "react";
 const SeachBox = ({ placeholder, className, onChange, ...rest }) => {
   return (
     <input
-      type="search"
+      type="text"
       className={
         className
           ? `form-control shadow-none ${className}`

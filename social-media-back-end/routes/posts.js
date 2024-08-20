@@ -35,7 +35,6 @@ router.post(
       caption: body.caption,
     });
     if (file) post.imagePath = generatePath(file.path);
-    console.log(post.imagePath);
 
     // I might implement a transaction for this later
     // But for now this will work
@@ -134,7 +133,7 @@ router.put(
         // If there is an image and its not the same as the last one delete the last one.
         const imageChanged = post.imagePath && post.imagePath !== newImagePath;
         if (imageChanged) {
-          deleteFile(getNameFromPath(post.imagePath));
+          deleteFile(getNameFromPath(post.imagePath), console.error);
         }
 
         post.caption = body.caption;
@@ -222,7 +221,7 @@ router.delete("/:_id", [validateObjectId, auth], async (req, res) => {
     console.log("Uncaught error: ", error);
   }
   if (post.imagePath) {
-    deleteFile(getNameFromPath(post.imagePath));
+    deleteFile(getNameFromPath(post.imagePath), console.error);
   }
 
   return res.send(post);

@@ -1,11 +1,10 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
 import SeachBox from "./SearchBox";
 
-const DropDownSearchBox = ({ items, placeholder, className, onChange }) => {
-  let itemsCount = 0;
-
-  const isValid = () => items !== undefined;
+const DropDownSearchBox = ({ children, placeholder, className, onChange }) => {
+  function isValid() {
+    return true;
+  }
 
   return (
     <>
@@ -21,13 +20,7 @@ const DropDownSearchBox = ({ items, placeholder, className, onChange }) => {
         />
         {isValid() && (
           <ul className="dropdown-menu text-small">
-            {items.map((item) => (
-              <li key={++itemsCount}>
-                <NavLink className="dropdown-item" to={item.to}>
-                  {item.text}
-                </NavLink>
-              </li>
-            ))}
+            {children?.map((child) => child)}
           </ul>
         )}
       </div>

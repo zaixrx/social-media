@@ -16,6 +16,12 @@ import { faIcons } from "@fortawesome/free-solid-svg-icons";
 import { faEllipsisVertical } from "@fortawesome/free-solid-svg-icons";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faCheckDouble } from "@fortawesome/free-solid-svg-icons";
+import { faEye } from "@fortawesome/free-regular-svg-icons";
+import { faEyeSlash } from "@fortawesome/free-regular-svg-icons";
+import { faPaperPlane } from "@fortawesome/free-regular-svg-icons";
+import { faReply } from "@fortawesome/free-solid-svg-icons";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
   regularHeart,
@@ -26,15 +32,19 @@ library.add(
   faIcons,
   faEllipsisVertical,
   faPen,
-  faCheck
+  faCheck,
+  faCheckDouble,
+  faEye,
+  faEyeSlash,
+  faPaperPlane,
+  faReply,
+  faXmark
 );
 
 const container = document.getElementById("root");
 const root = createRoot(container);
 root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
 );

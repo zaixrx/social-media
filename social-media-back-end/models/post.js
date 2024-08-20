@@ -5,7 +5,7 @@ const { likeSchema } = require("./like");
 
 const postJoiSchema = Joi.object({
   image: Joi.any(),
-  caption: Joi.string().required(),
+  caption: Joi.string().allow(""),
   publishDate: Joi.date(),
   like: Joi.boolean(),
 });
@@ -13,17 +13,13 @@ const postJoiSchema = Joi.object({
 const postSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
+    required: true,
     ref: "User",
-    required: true,
   },
-  caption: {
-    type: String,
-    required: true,
-  },
+  caption: String,
   publishDate: {
     type: Date,
     default: Date.now(),
-    required: true,
   },
   imagePath: String,
   likes: [likeSchema],

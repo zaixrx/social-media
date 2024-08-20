@@ -47,7 +47,7 @@ class EditPost extends Form {
   };
 
   componentDidMount() {
-    this.props.getDataRefrence(this.getData);
+    this.props.getDataReference(this.getData);
   }
 
   doSubmit = async () => {
