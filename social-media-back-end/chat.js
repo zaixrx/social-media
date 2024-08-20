@@ -130,15 +130,26 @@ module.exports = function (server) {
           }) - 1;
         const message = room.messages[messageIndex];
 
-        if (messageFiles) {
-          messageFiles.forEach((file, index) => {
+        if (messageFiles.length) {
+          for (let i = 0; i < messageFiles.length; i++) {
+            const file = messageFiles[i];
             const fileName = `${message._id}_${index}.png`;
 
-            createFile(file, fileName, `./public/chat/${room._id}/`, error);
-            message.files.push(
-              `${process.env.PROTOCOL}://${process.env.HOST_NAME}:${process.env.PORT}/chat/${room._id}/${fileName}`
+            const directoryCreatedSuccessfully = createFile(
+              file.data,
+              fileName,
+              `./public/chat/${room._id}/`,
+              error
             );
-          });
+
+            if (!directoryCreatedSuccessfully && !messageValue.trim())
+              return console.log(directoryCreatedSuccessfully);
+
+            message.files.push({
+              path: `${process.env.PROTOCOL}://${process.env.HOST_NAME}:${process.env.PORT}/chat/${room._id}/${fileName}`,
+              type: file.type,
+            });
+          }
         }
 
         room.members.map((member) => {
@@ -180,7 +191,7 @@ module.exports = function (server) {
 
       if (message.files.length) {
         message.files.forEach((file) => {
-          const path = file.replace(
+          const path = file.path.replace(
             `http://${process.env.HOST_NAME}:${process.env.PORT}`,
             "./public"
           );
@@ -308,7 +319,8 @@ module.exports = function (server) {
     );
 
     function error(message) {
-      return socket.emit("error", message);
+      socket.emit("error", message);
+      return false;
     }
   });
 };

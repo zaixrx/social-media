@@ -27,7 +27,18 @@ const messageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now(),
   },
-  files: [String],
+  files: [
+    {
+      path: {
+        type: String,
+        required: true,
+      },
+      type: {
+        type: String,
+        require: true,
+      },
+    },
+  ],
 });
 
 const memberSchema = new mongoose.Schema(

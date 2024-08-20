@@ -45,117 +45,103 @@ function Message({
         className="w-100"
       >
         <div
-          className={`d-flex flex-column ${
+          className={`d-flex gap-1 flex-column ${
             isOwner ? "align-items-end" : "align-items-start"
           }`}
         >
-          <div className="d-flex align-items-end gap-2">
-            {isOwner && (
-              <ReactionList
-                isVisible
-                isOwner={isOwner}
-                onReply={() => onReply(message)}
-                onEmojiSelected={(emoji) => onEmojiSelected(message._id, emoji)}
-                onMessageDelete={() => onMessageDelete(message._id)}
-                onEditModeTriggered={toggleEditMode}
-              />
+          <div
+            className={`d-flex flex-column ${
+              isOwner ? "align-items-end" : "align-items-start"
+            }`}
+          >
+            {message.root && (
+              <div
+                className="text-truncate bg-primary-subtle rounded p-2 w-fit-content"
+                style={{
+                  maxWidth: 250,
+                  fontSize: 12,
+                }}
+              >
+                {message.root.value}
+              </div>
             )}
-            <div
-              className={`d-flex flex-column ${
-                isOwner ? "align-items-end" : "align-items-start"
-              }`}
-            >
-              {message.root && (
-                <div
-                  className="text-truncate bg-primary-subtle rounded p-2 w-fit-content"
-                  style={{
-                    maxWidth: 250,
-                    fontSize: 12,
-                  }}
-                >
-                  {message.root.value}
+            <>
+              {isOwner ? (
+                <div className="d-flex flex-column align-items-end">
+                  <div className="d-flex gap-2 align-items-center">
+                    <div style={{ display: editMode ? "block" : "none" }}>
+                      <div className="input-group">
+                        <input
+                          type="text"
+                          ref={editInput}
+                          placeholder="Edit Message"
+                          className="form-control shadow-none"
+                          onKeyDown={handleKeyDown}
+                        />
+                        <button
+                          onClick={handleEditMessage}
+                          className="btn btn-primary"
+                        >
+                          <FontAwesomeIcon icon="fa-regular fa-paper-plane" />
+                        </button>
+                      </div>
+                    </div>
+                    {message.value && (
+                      <div
+                        style={{ display: editMode ? "none" : "block" }}
+                        className="bg-primary bg-gradient text-white p-2 rounded-2 w-fit-content"
+                      >
+                        {message.value}
+                      </div>
+                    )}
+                  </div>
+                  <EmojieReactionList
+                    style={{
+                      display: editMode ? "none" : "flex",
+                      marginTop: -10,
+                    }}
+                    message={message}
+                    direction="L"
+                  />
+                </div>
+              ) : (
+                <div className="d-flex flex-column">
+                  <div className="d-flex align-items-center gap-2">
+                    {message.value && (
+                      <div className="bg-secondary bg-gradient text-light p-2 px-3 rounded-2 w-fit-content">
+                        {message.value}
+                      </div>
+                    )}
+                  </div>
+                  <EmojieReactionList
+                    style={{
+                      marginTop: -10,
+                    }}
+                    message={message}
+                    direction="R"
+                  />
                 </div>
               )}
-              <>
-                {isOwner ? (
-                  <div className="d-flex flex-column align-items-end">
-                    <div className="d-flex gap-2 align-items-center">
-                      <div style={{ display: editMode ? "block" : "none" }}>
-                        <div className="input-group">
-                          <input
-                            type="text"
-                            ref={editInput}
-                            placeholder="Edit Message"
-                            className="form-control shadow-none"
-                            onKeyDown={handleKeyDown}
-                          />
-                          <button
-                            onClick={handleEditMessage}
-                            className="btn btn-primary"
-                          >
-                            <FontAwesomeIcon icon="fa-regular fa-paper-plane" />
-                          </button>
-                        </div>
-                      </div>
-                      {message.value && (
-                        <div
-                          style={{ display: editMode ? "none" : "block" }}
-                          className="bg-primary bg-gradient text-white p-2 rounded-2 w-fit-content"
-                        >
-                          {message.value}
-                        </div>
-                      )}
-                    </div>
-                    <EmojieReactionList
-                      style={{
-                        display: editMode ? "none" : "flex",
-                        marginTop: -10,
-                      }}
-                      message={message}
-                      direction="L"
-                    />
-                  </div>
-                ) : (
-                  <div className="d-flex flex-column">
-                    <div className="d-flex align-items-center gap-2">
-                      {message.value && (
-                        <div className="bg-secondary bg-gradient text-light p-2 px-3 rounded-2 w-fit-content">
-                          {message.value}
-                        </div>
-                      )}
-                    </div>
-                    <EmojieReactionList
-                      style={{
-                        marginTop: -10,
-                      }}
-                      message={message}
-                      direction="R"
-                    />
-                  </div>
-                )}
-              </>
-              <div className="d-flex flex-column gap-2">
-                {message.files.map((file, index) => (
-                  <Image
-                    key={index}
-                    src={file}
-                    className="avatar"
-                    style={{ maxWidth: 300 }}
-                  />
-                ))}
-              </div>
+            </>
+            <div className="d-flex flex-column gap-2">
+              {message.files.map((file, index) => (
+                <Image
+                  key={index}
+                  src={file.path}
+                  className="avatar"
+                  style={{ maxWidth: 300 }}
+                />
+              ))}
             </div>
-            {!isOwner && (
-              <ReactionList
-                isVisible
-                isOwner={isOwner}
-                onReply={() => onReply(message)}
-                onEmojiSelected={(emoji) => onEmojiSelected(message._id, emoji)}
-                onMessageDelete={() => onMessageDelete(message._id)}
-                onEditModeTriggered={toggleEditMode}
-              />
-            )}
           </div>
+          <ReactionList
+            isVisible
+            isOwner={isOwner}
+            onReply={() => onReply(message)}
+            onEmojiSelected={(emoji) => onEmojiSelected(message._id, emoji)}
+            onMessageDelete={() => onMessageDelete(message._id)}
+            onEditModeTriggered={toggleEditMode}
+          />
         </div>
       </div>
     </div>

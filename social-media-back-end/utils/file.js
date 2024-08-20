@@ -18,11 +18,14 @@ function createDirIfNotExists(path, error) {
 }
 
 function createFile(file, fileName, path, error) {
-  if (!createDirIfNotExists(path, error))
-    return console.log("File Already Exists");
+  if (!file)
+    return error("Cannot upload file via WebSockets, because it is undefined");
+
   fs.writeFile(path + fileName, file, (err) => {
-    if (err) error(`Cannot save files ${err}`);
+    if (err) return error(`Cannot save files ${err}`);
   });
+
+  return true;
 }
 
 function deleteFile(path, error) {

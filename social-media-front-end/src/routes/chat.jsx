@@ -44,7 +44,7 @@ function Chat({ user }) {
 
       for (let i = 0; i < files.length; i++) {
         const file = _files[i];
-        file.url = await getFileUrl(file);
+        file.url = await getFileUrl(file.data);
       }
 
       setFiles(_files);
@@ -116,6 +116,8 @@ function Chat({ user }) {
     if (!message.trim() && !files.length) return;
     files.forEach((file) => delete file.url);
     await sendMessage(message, reply?._id, files);
+
+    // reset
     messageInput.current.value = "";
     setFiles([]);
     setReply(null);
@@ -150,11 +152,21 @@ function Chat({ user }) {
       const availabe = MAX_FILES_LENGTH - filesLength;
       if (availabe > 0 && newLength > MAX_FILES_LENGTH) {
         for (let i = 0; i < availabe; i++) {
-          _files.push(newFiles[i]);
+          const currentFile = newFiles[i];
+          _files.push({
+            data: currentFile,
+            type: currentFile.type,
+          });
         }
       } else {
-        _files = [...files, ...newFiles];
+        const _newFiles = [];
+        newFiles.forEach((newFile) => {
+          _newFiles.push({ data: newFile, type: newFile.type });
+        });
+        _files = [...files, ..._newFiles];
       }
+
+      console.log(_files);
 
       return _files;
     });

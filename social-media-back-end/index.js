@@ -14,6 +14,7 @@ routes(app);
 
 const server = app.listen(port, () => {
   console.log(`Server started on port ${port}...`);
+  console.log("NODE_VERSION: ", process.version);
 });
 
 chat(server);
