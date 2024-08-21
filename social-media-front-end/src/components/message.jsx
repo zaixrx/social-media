@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Emojis from "./Emojis.jsx";
 import DetailsDropDown from "./detailsDropDown.jsx";
 import Image from "../common/Image.jsx";
+import Video from "../common/Video.jsx";
 
 function Message({
   isOwner,
@@ -45,7 +46,7 @@ function Message({
         className="w-100"
       >
         <div
-          className={`d-flex gap-1 flex-column ${
+          className={`d-flex flex-column gap-1 ${
             isOwner ? "align-items-end" : "align-items-start"
           }`}
         >
@@ -62,7 +63,7 @@ function Message({
                   fontSize: 12,
                 }}
               >
-                {message.root.value}
+                {message.root.value || "Replying to an attachment"}
               </div>
             )}
             <>
@@ -95,14 +96,6 @@ function Message({
                       </div>
                     )}
                   </div>
-                  <EmojieReactionList
-                    style={{
-                      display: editMode ? "none" : "flex",
-                      marginTop: -10,
-                    }}
-                    message={message}
-                    direction="L"
-                  />
                 </div>
               ) : (
                 <div className="d-flex flex-column">
@@ -113,27 +106,46 @@ function Message({
                       </div>
                     )}
                   </div>
-                  <EmojieReactionList
-                    style={{
-                      marginTop: -10,
-                    }}
-                    message={message}
-                    direction="R"
-                  />
                 </div>
               )}
             </>
-            <div className="d-flex flex-column gap-2">
-              {message.files.map((file, index) => (
-                <Image
-                  key={index}
-                  src={file.path}
-                  className="avatar"
-                  style={{ maxWidth: 300 }}
-                />
-              ))}
-            </div>
           </div>
+          <div className="d-flex flex-column gap-2">
+            {message.files.map((file, index) => {
+              switch (file.type.split("/")[0]) {
+                case "image":
+                  return (
+                    <Image
+                      key={index}
+                      src={file.path}
+                      className="avatar"
+                      width={300}
+                    />
+                  );
+
+                case "video":
+                  return (
+                    <Video
+                      key={index}
+                      src={file.path}
+                      type={file.type}
+                      width={300}
+                    />
+                  );
+
+                default:
+                  break;
+              }
+            })}
+          </div>
+          <EmojieReactionList
+            style={{
+              display: editMode ? "none" : "flex",
+              marginTop: -15,
+            }}
+            message={message}
+            direction={isOwner ? "L" : "R"}
+          />
           <ReactionList
             isVisible
             isOwner={isOwner}
@@ -189,7 +201,7 @@ function EmojieReactionList({ message, direction, ...rest }) {
     <div
       className={`gap-1 bg-${
         direction === "L" ? "primary" : "secondary"
-      } bg-gradient rounded-5 w-fit-content p-1`}
+      } bg-gradient rounded-5 w-fit-content p-1 z-first`}
       {...rest}
     >
       {message.reactions.map((reaction, index) => (

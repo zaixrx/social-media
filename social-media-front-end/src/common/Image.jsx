@@ -4,7 +4,7 @@ function Image({ src, className, ...rest }) {
   return (
     <img
       src={src}
-      className={`clickable border avatar ${className}`}
+      className={`clickable rounded avatar ${className}`}
       {...rest}
       onClick={() => {
         window.open(src);

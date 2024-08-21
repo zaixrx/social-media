@@ -5,15 +5,16 @@ import {
   editMessage,
   start,
   messageEmoji,
-  getFile,
 } from "../services/chat";
 import { Link, useParams } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Message from "../components/message";
 import { getFileUrl } from "../utils/file";
+import { showMessage } from "../utils/logging";
 
 function Chat({ user }) {
   const MAX_FILES_LENGTH = 4;
+  const MAX_FILE_SIZE_IN_MEGABYTE = 20;
 
   const [messages, setMessages] = useState([]);
   const [contactedMember, setContactedMember] = useState({});
@@ -146,6 +147,18 @@ function Chat({ user }) {
     if (reply) setReply(false);
 
     setFiles((_files) => {
+      const pushFile = (file) => {
+        if (file.size / (1024 * 1024) > MAX_FILE_SIZE_IN_MEGABYTE)
+          return showMessage(
+            `You have excedded tha maximum file size (${MAX_FILE_SIZE_IN_MEGABYTE}MB)`
+          );
+
+        _files.push({
+          data: file,
+          type: file.type,
+        });
+      };
+
       const filesLength = _files.length;
       const newLength = filesLength + newFiles.length;
 
@@ -153,20 +166,15 @@ function Chat({ user }) {
       if (availabe > 0 && newLength > MAX_FILES_LENGTH) {
         for (let i = 0; i < availabe; i++) {
           const currentFile = newFiles[i];
-          _files.push({
-            data: currentFile,
-            type: currentFile.type,
-          });
+          pushFile(currentFile);
         }
       } else {
         const _newFiles = [];
-        newFiles.forEach((newFile) => {
-          _newFiles.push({ data: newFile, type: newFile.type });
+        newFiles.forEach((file) => {
+          pushFile(file);
         });
         _files = [...files, ..._newFiles];
       }
-
-      console.log(_files);
 
       return _files;
     });
@@ -220,7 +228,7 @@ function Chat({ user }) {
                   <span className="fs-5">
                     Replying to <b>{reply.sender.username}</b>
                   </span>
-                  <p>{reply.value}</p>
+                  <p>{reply.value || "Replying to attachement"}</p>
                 </div>
                 <button
                   onClick={() => setReply(null)}

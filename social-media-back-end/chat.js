@@ -8,6 +8,7 @@ module.exports = function (server) {
     cors: {
       origin: "*",
     },
+    maxHttpBufferSize: 2e7,
   });
 
   /* 
@@ -130,10 +131,12 @@ module.exports = function (server) {
           }) - 1;
         const message = room.messages[messageIndex];
 
-        if (messageFiles.length) {
+        if (messageFiles?.length) {
           for (let i = 0; i < messageFiles.length; i++) {
             const file = messageFiles[i];
-            const fileName = `${message._id}_${index}.png`;
+            const fileExtension =
+              file.type.slice("/")[0] === "image" ? "png" : "mp4";
+            const fileName = `${message._id}_${index}.${fileExtension}`;
 
             const directoryCreatedSuccessfully = createFile(
               file.data,

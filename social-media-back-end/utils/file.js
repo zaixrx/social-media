@@ -21,6 +21,9 @@ function createFile(file, fileName, path, error) {
   if (!file)
     return error("Cannot upload file via WebSockets, because it is undefined");
 
+  if (!createDirIfNotExists(path, error))
+    return error("Could not create directory.");
+
   fs.writeFile(path + fileName, file, (err) => {
     if (err) return error(`Cannot save files ${err}`);
   });

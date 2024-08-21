@@ -167,6 +167,6 @@ small {
   width: fit-content;
 }
 
-.nim {
-  color: #dee2e6;
+.z-first {
+  z-index: 1;
 }

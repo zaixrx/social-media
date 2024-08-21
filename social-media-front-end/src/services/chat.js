@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import { showMessage } from "../utils/logging.js";
 
 let socket = undefined;
 let serverSocketID = undefined;
@@ -51,7 +52,7 @@ export function start(
     });
 
     socket.on("error", (message) => {
-      alert(message);
+      showMessage(message);
     });
   } catch (error) {
     console.log("Error", error.message);
