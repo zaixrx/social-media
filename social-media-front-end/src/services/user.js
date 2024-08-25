@@ -2,7 +2,7 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { getToken } from "../utils/token";
 
-const API_ENDPOINT = `http://${window.location.hostname}:3000/api/users/`;
+const API_ENDPOINT = `${process.env.REACT_APP_API_URL}/users/`;
 
 export function getUser(_id) {
   return axios.get(API_ENDPOINT + _id);

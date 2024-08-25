@@ -11,16 +11,21 @@ import {
 import Comment from "./comment";
 import { getToken } from "../utils/token";
 import { getDateString } from "../utils/time";
+import { showMessage } from "../utils/logging";
+import _ from "lodash";
+import Image from "../common/Image";
 
 function Post({ currentUser, user, post, onPostEdit }) {
   const [likes, setLikes] = useState({ liked: false, count: "" });
   const [comments, setComments] = useState([]);
-  const commentInput = useRef();
+  const [currentCommentParent, setCurrentCommentParent] = useState({});
+  const commentInput = useRef(undefined);
 
   useEffect(() => {
-    const { comments, likes } = post;
+    const { comments: _comments, likes } = post;
 
-    setComments(comments);
+    prepareComments(_comments);
+    setComments(_comments);
 
     if (!likes) return;
 
@@ -57,31 +62,31 @@ function Post({ currentUser, user, post, onPostEdit }) {
     }
   }
 
-  async function handleCommentSend({ key }) {
-    // Enter Key
-    if (key !== "Enter") return;
-    await localCommentSend();
-  }
-
-  async function localCommentSend() {
+  async function handleCommentSend() {
     const comment = commentInput.current.value;
     if (!comment.trim()) return;
 
     try {
       const { data: receivedComment } = await publishComment(
         comment,
+        currentCommentParent._id,
         post._id,
         getToken()
       );
 
       const _comments = [...comments];
+
+      if (receivedComment.parent) {
+        const commentParent = getComment(receivedComment.parent);
+      }
+
       _comments.push(receivedComment);
       setComments(_comments);
 
+      setCurrentCommentParent({});
       commentInput.current.value = "";
-    } catch (error) {
-      if (error.response) console.log(error.response.data);
-      alert(error.message);
+    } catch ({ response, message }) {
+      showMessage("Failed to send message", response?.data || message);
     }
   }
 
@@ -92,7 +97,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
       return c._id === _id;
     });
 
-    if (!comment) throw Error("(Comment[]).Contains(comment) => false");
+    if (!comment) console.log("(Comment[]).Contains(comment) => false");
     const index = comments.indexOf(comment);
 
     try {
@@ -119,21 +124,62 @@ function Post({ currentUser, user, post, onPostEdit }) {
   async function handleCommentDelete(_id) {
     if (!_id) return;
 
-    const comment = comments.find((c) => {
+    const commentToDelete = comments.find((c) => {
       return c._id === _id;
     });
 
-    if (!comment) throw Error("(Comment[]).Contains(comment) => false");
+    if (!commentToDelete)
+      return showMessage("(Comment[]).Contains(comment) => false");
 
     try {
       await deleteComment(_id, post._id, getToken());
       const _comments = [...comments];
-      _comments.splice(_comments.indexOf(comment), 1);
+
+      // Remove from post.comments 1
+      // Remove from parent.children 2
+      // Remove commentToDelete.children from post.comments 3
+
+      // Step 1
+      _comments.splice(_comments.indexOf(commentToDelete), 1);
+
+      // Step 2
+      const commentToDeleteParent = getComment(commentToDelete.parent);
+      if (commentToDeleteParent) {
+        const { children } = commentToDeleteParent;
+        children.splice(children.indexOf(commentToDelete), 1);
+      }
+
+      //Step 3
+      const { children } = commentToDelete;
+      if (children.length) {
+        _comments.forEach((comment, index) => {
+          if (!children.includes(comment)) return;
+          _comments.splice(index, 1);
+        });
+      }
+
       setComments(_comments);
-    } catch (error) {
-      if (error.response) console.log(error.response.data);
-      alert(error.message);
+    } catch ({ response, message }) {
+      showMessage("Could not remove message", response?.data || message);
     }
+  }
+
+  function handleCommentReplyTriggerd(parentCommentID, parentUsername) {
+    if (!parentCommentID) return;
+    const parentComment = comments.find(
+      (comment) => comment._id === parentCommentID
+    );
+    if (!parentComment) return;
+    commentInput.current.value = `@${parentUsername} `;
+    commentInput.current.focus();
+    setCurrentCommentParent({
+      _id: parentCommentID,
+      username: parentUsername,
+    });
+  }
+
+  function getComment(commentID) {
+    return comments.find((comment) => comment._id === commentID);
   }
 
   return (
@@ -157,7 +203,6 @@ function Post({ currentUser, user, post, onPostEdit }) {
                   {getDateString(new Date(post.publishDate))}
                 </span>
               </div>
-              <p className="mb-0 small">Caption...</p>
             </div>
           </Link>
           {user && currentUser && user._id === currentUser._id && (
@@ -199,7 +244,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
           <div className="mb-3">
             <p className="mb-0">{post.caption}</p>
             {post.imagePath && (
-              <img src={post.imagePath} className="post-img mt-3" />
+              <Image src={post.imagePath} className="post-img mt-3" />
             )}
           </div>
           <div className="d-flex mb-3 gap-4">
@@ -215,7 +260,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
             </div>
             <div
               className="d-flex align-items-center clickable"
-              onClick={() => document.getElementById("input").focus()}
+              onClick={() => commentInput.current.focus()}
             >
               <FontAwesomeIcon
                 className="card-btn me-2"
@@ -224,8 +269,8 @@ function Post({ currentUser, user, post, onPostEdit }) {
               <p className="mb-0">{comments.length} Comment(s)</p>
             </div>
           </div>
-          <div className="comments">
-            <div className="d-flex gap-3 mb-3">
+          <div className="comments d-flex flex-column gap-2">
+            <div className="d-flex gap-3">
               <img
                 height={40}
                 width={40}
@@ -234,31 +279,58 @@ function Post({ currentUser, user, post, onPostEdit }) {
               />
               <div className="input-group">
                 <input
-                  id="input"
                   ref={commentInput}
-                  onKeyDown={handleCommentSend}
+                  onKeyDown={async ({ key }) => {
+                    if (key !== "Enter") return;
+                    await handleCommentSend();
+                  }}
                   className="form-control pe-5 bg-light shadow-none"
                   placeholder="Add a comment..."
                 />
-                <button className="btn btn-primary" onClick={localCommentSend}>
+                <button
+                  className="btn btn-primary"
+                  onClick={async () => await handleCommentSend()}
+                >
                   <FontAwesomeIcon icon="fa-regular fa-paper-plane" />
                 </button>
               </div>
             </div>
-            {comments.map((c) => (
-              <Comment
-                key={c._id}
-                comment={c}
-                isOwner={currentUser._id === c.user}
-                onCommentEdit={handleCommentEdit}
-                onCommentDelete={handleCommentDelete}
-              />
-            ))}
+            {currentCommentParent.username && (
+              <p>Currently replying to {currentCommentParent.username}</p>
+            )}
+            {comments.map((c) => {
+              if (c.parent) return;
+
+              return (
+                <Comment
+                  key={c._id}
+                  comment={c}
+                  isOwner={currentUser._id === c.user}
+                  onCommentEdit={handleCommentEdit}
+                  onCommentDelete={handleCommentDelete}
+                  onCommentReplyTriggerd={handleCommentReplyTriggerd}
+                  currentUser={currentUser}
+                  getComment={getComment}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
     )
   );
+
+  function prepareComments(comments) {
+    for (let i = 0; i < comments.length; i++) {
+      const comment = comments[i];
+
+      if (!comment.children) continue;
+
+      for (let j = 0; j < comment.children.length; j++) {
+        comment.children[j] = getComment(comment.children[j]);
+      }
+    }
+  }
 }
 
 export default Post;

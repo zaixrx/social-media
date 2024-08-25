@@ -1,0 +1,11 @@
+// TODO: fix time => Done
+// TODO: fix comment focus "https://discord.com/channels/887668571545677844/1269452544766119936/1275945908919603273" => Done
+// TODO: make SharePost && EditPost an fc => Done
+// TODO: fix auto reload bug "https://discord.com/channels/887668571545677844/1269452544766119936/1275948297676128378" => Done (It's not a bug "https://discord.com/channels/887668571545677844/1269452544766119936/1276491030211985490") Or can be because of automatic form sumbittion onClick on a button
+// TODO: add replying to comments => Done
+// TODO: fix file extensions (websockets) => Done
+// TODO: can't send a video and an image at the same time (websockets) => Done
+// TODO: selecting multiple photos gives the same ones (websockets) => Done
+// TODO: add the ability to view videos before sending them chat => Done
+// TODO: fix "ValidationError: Room validation failed: members.0.user: Path `user` is required., members.1.user: Path `user` is required." => Not Done
+// TODO: add the ability to reconnect when disconnected (websockets) => Not Done

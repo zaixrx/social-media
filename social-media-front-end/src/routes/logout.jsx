@@ -1,14 +1,13 @@
-import React, { Component } from "react";
+import React, { useEffect } from "react";
+import { removeToken } from "../utils/token";
 
-class Logout extends Component {
-  componentDidMount() {
-    localStorage.removeItem("token");
+function Logout() {
+  useEffect(() => {
+    removeToken();
     window.location = "/";
-  }
+  }, []);
 
-  render() {
-    return null;
-  }
+  return null;
 }
 
 export default Logout;

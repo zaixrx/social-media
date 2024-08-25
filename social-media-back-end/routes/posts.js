@@ -1,3 +1,4 @@
+const _ = require("lodash");
 const router = require("express").Router();
 const {
   deleteFile,
@@ -9,7 +10,7 @@ const upload = require("../middleware/upload.js");
 const asyncMiddleware = require("../middleware/async.js");
 const validateObjectId = require("../middleware/validateObjectId.js");
 const { Post, validatePost } = require("../models/post.js");
-const { commentValidate } = require("../models/comment.js");
+const { commentValidate, getComment } = require("../models/comment.js");
 const { User } = require("../models/user.js");
 
 router.get(
@@ -33,10 +34,11 @@ router.post(
     const post = new Post({
       user: user._id,
       caption: body.caption,
+      publishDate: new Date(),
     });
     if (file) post.imagePath = generatePath(file.path);
 
-    // I might implement a transaction for this later
+    // I might implement a transaction for this later (You won't)
     // But for now this will work
     const dbUser = await User.findById(user._id);
 
@@ -90,16 +92,30 @@ router.put(
 
     switch (type) {
       case "comment-post":
-        const comment = {
-          user: user._id,
-          value: body.comment,
-        };
-
         if (!commentValidate(body, res)) return;
 
-        const index = post.comments.length;
-        post.comments.push(comment);
-        res.send(post.comments[index]);
+        const commentIndex =
+          post.comments.push({
+            user: user._id,
+            value: body.comment,
+            publishDate: new Date(),
+          }) - 1;
+        const comment = post.comments[commentIndex];
+
+        if (body.parent) {
+          const commentParent = post.comments.find(
+            (c) => c._id.toString() === body.parent
+          );
+
+          if (!commentParent) {
+            return res.status(404).send("Parent message does not exist");
+          }
+
+          comment.parent = commentParent._id;
+          commentParent.children.push(comment._id);
+        }
+
+        res.send(comment);
         break;
 
       case "comment-put":
@@ -163,74 +179,99 @@ router.put(
         break;
 
       default:
-        return res.status(400).send(`Invalid request type: ${type}`);
+        return error(res, 400, `Invalid request type: ${type}`);
     }
 
     await post.save();
   })
 );
 
-router.delete("/:_id", [validateObjectId, auth], async (req, res) => {
-  const post = await Post.findById(req.params._id);
+router.delete(
+  "/:_id",
+  [validateObjectId, auth],
+  asyncMiddleware(async (req, res) => {
+    const { headers, params, user } = req;
 
-  if (!post)
-    return res.status(404).send("The given id doesn't correspond to any Post.");
+    const post = await Post.findById(params._id);
+    if (!post)
+      return error(res, 404, "The given id doesn't correspond to any Post.");
 
-  const commentID = req.headers["x-comment-id"];
-  if (commentID) {
-    const comment = post.comments.find((c) => c._id.toString() === commentID);
-    if (!comment)
-      return res
-        .status(404)
-        .send("The given id doesn't correspond to any Comment.");
-    if (comment.user._id.toString() !== req.user._id)
-      return res.status(403).send("Only the Owner can edit this Comment.");
-    post.comments.splice(post.comments.indexOf(comment), 1);
-    await post.save();
+    const type = headers["x-type"];
+
+    switch (type) {
+      case "comment":
+        const commentID = headers["x-comment-id"];
+        const commentToDelete = getComment(post, commentID);
+        if (!commentToDelete)
+          return error(
+            res,
+            404,
+            "The given id doesn't correspond to any Comment."
+          );
+
+        if (commentToDelete.user._id.toString() !== user._id)
+          return error(res, 403, "Only the Owner can edit this Comment.");
+
+        // Remove from post.comments 1
+        // Remove from parent.children 2
+        // Remove commentToDelete.children from post.comments 3
+
+        const { comments } = post;
+        if (comments) {
+          // Step 1
+          comments.splice(comments.indexOf(commentToDelete), 1);
+
+          // Step 2
+          const commentToDeleteParent = getComment(
+            post,
+            commentToDelete.parent
+          );
+          if (commentToDeleteParent) {
+            const { children } = commentToDeleteParent;
+            children.splice(children.indexOf(commentToDelete._id), 1);
+          }
+
+          //Step 3
+          const { children } = commentToDelete;
+          if (children.length) {
+            comments.forEach((comment, index) => {
+              if (!children.includes(comment._id)) return;
+              comments.splice(index, 1);
+            });
+          }
+        }
+
+        await post.save();
+        break;
+
+      case "post":
+        if (post.user.toString() !== user._id)
+          return error(res, 403, "Only the owner can delete this Post.");
+
+        const postUser = await User.findById(user._id);
+        if (!postUser) return error("The post's owner doesn't exists");
+
+        // post.deleteOne() removes this document from the database(Posts collection)
+        await post.deleteOne();
+        _.pull(postUser.posts, post._id);
+        await postUser.save();
+        if (post.imagePath) {
+          deleteFile(getNameFromPath(post.imagePath), (message) =>
+            error(res, 500, message)
+          );
+        }
+        break;
+
+      default:
+        return error(res, 400, `Invalid request type: ${type}`);
+    }
+
     return res.send(post);
-  }
+  })
+);
 
-  if (req.user._id !== post.user.toString())
-    return res.status(403).send("Only the owner can delete this Post.");
-
-  const u = await User.findById(post.user);
-  if (!u) return res.status(400).send("User is not found.");
-
-  // I might implement a transaction for this later
-  // But for now this will work
-  try {
-    await post.deleteOne();
-    const index = u.posts.indexOf(post._id);
-    u.posts.splice(index, 1);
-    await u.save();
-  } catch (error) {
-    if (!u.posts.includes(post)) {
-      u.posts.push(post);
-      await u.save();
-      return res
-        .status(500)
-        .send(`Could not update the Post's User Document: ${error.message}`);
-    }
-    const p = await Post.findById(post._id);
-    if (!p) {
-      await post.save();
-      return res
-        .status(500)
-        .send(`Could not delete the given Post: ${error.message}`);
-    }
-    console.log("Uncaught error: ", error);
-  }
-  if (post.imagePath) {
-    deleteFile(getNameFromPath(post.imagePath), console.error);
-  }
-
-  return res.send(post);
-});
-
-function validate(schema, value, res) {
-  const { error } = schema.validate(value);
-  res.status(400).send(error.details[0].message);
-  return error === undefined;
+function error(res, statusCode, message) {
+  res.status(statusCode).send(message);
 }
 
 module.exports = router;

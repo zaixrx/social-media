@@ -1,25 +1,20 @@
-import React, { createRef } from "react";
-import Form from "../common/Form/Form";
+import React, { useRef, useState } from "react";
 import { publishPost } from "../services/posts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { getToken } from "../utils/token.js";
+import { showMessage } from "../utils/logging.js";
+import TextArea from "../common/Form/TextArea.jsx";
 
-class SharePost extends Form {
-  errorValidation = false;
-  inputImage = createRef(null);
-  state = {
-    data: {
-      caption: "",
-      image: {},
-    },
-  };
+function SharePost({ user, onNewPost }) {
+  const inputImage = useRef();
+  const [image, setImage] = useState({});
+  const [caption, setCaption] = useState("");
 
-  async doSubmit() {
-    const { image, caption } = this.state.data;
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+    if (!caption.trim() && !image.name) return;
 
     const token = getToken();
-
-    if (caption.trim() === "" && !image.name) return;
 
     let formData = new FormData();
     formData.append("caption", caption);
@@ -27,64 +22,61 @@ class SharePost extends Form {
 
     try {
       await publishPost(formData, token);
-      window.location.reload();
+      onNewPost();
     } catch (error) {
-      alert(error.response.data);
+      showMessage(error.response.data);
     }
   }
 
-  handleTestChange = (e) => {
-    const data = { ...this.state.data };
-    data.image = e.currentTarget.files[0];
-    this.setState({ data });
-  };
-
-  render() {
-    const { user } = this.props;
-    const { image } = this.state.data;
-
-    return (
-      <div className="card p-3">
-        <form className="w-100 d-flex">
-          <img
-            height={50}
-            width={50}
-            src={user.avatarPath}
-            className="avatar rounded-circle me-3"
-          />
-          {this.renderTextArea(
-            "caption",
-            "Publish your sad thoughts to this mad blue sphere that is rotating around (7.2921150 ± 0.0000001)×10^(−5) (rad/s)..."
-          )}
-        </form>
-        <div className="d-flex justify-content-between mt-3">
-          <div className="d-flex gap-2 text-start align-items-center">
-            <div
-              className="icon-btn d-flex gap-2 text-success"
-              onClick={() => this.inputImage.current.click()}
-            >
-              <FontAwesomeIcon icon="fa-regular fa-image" />
-              Image
-            </div>
-            <input
-              name="image"
-              accept="image/png, image/jpg, image/gif, image/jpeg"
-              ref={this.inputImage}
-              onChange={this.handleTestChange}
-              style={{ display: "none" }}
-              type="file"
-            />
-            {image && (
-              <small className="text-truncate text-stop text-small">
-                {image.name}
-              </small>
-            )}
-          </div>
-          {this.renderButton("Post")}
-        </div>
-      </div>
-    );
+  function handleImageChange({ target }) {
+    setImage(target.files[0]);
   }
+
+  return (
+    <form onSubmit={handleFormSubmit} className="card p-3 d-flex gap-2">
+      <div className="d-flex">
+        <img
+          height={50}
+          width={50}
+          src={user.avatarPath}
+          className="avatar rounded-circle me-3"
+        />
+        <TextArea
+          placeholder="Publish your sad thoughts to this mad blue sphere that is rotating around (7.2921150 ± 0.0000001)×10^(−5) (rad/s)..."
+          setter={setCaption}
+          value={caption}
+          className="flex-grow-1"
+        />
+      </div>
+      <div className="d-flex justify-content-between">
+        <div className="d-flex align-items-center gap-2 text-start">
+          <div
+            className="icon-btn d-flex gap-2 text-success"
+            onClick={() => inputImage.current.click()}
+          >
+            <FontAwesomeIcon icon="fa-regular fa-image" />
+            Image
+          </div>
+          <input
+            name="image"
+            accept="image/png, image/jpg, image/gif, image/jpeg"
+            ref={inputImage}
+            onChange={handleImageChange}
+            style={{ display: "none" }}
+            type="file"
+          />
+          {image && (
+            <small className="text-truncate text-stop text-small">
+              {image.name}
+            </small>
+          )}
+        </div>
+        <button type="submit" className="btn btn-primary">
+          Share
+        </button>
+      </div>
+    </form>
+  );
 }
 
 export default SharePost;

@@ -1,8 +1,9 @@
 import axios from "axios";
 
-const apiLink = `http://${window.location.hostname}:3000/api/auth`;
+const apiLink = `${process.env.REACT_APP_API_URL}/auth`;
 
 export function authUser(email, password) {
+  console.log(apiLink);
   return axios.post(apiLink, {
     email,
     password,

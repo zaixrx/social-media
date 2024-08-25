@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Friend from "./friend.jsx";
 
-const FriendsBar = ({ followers, following }) => {
+function FriendsBar({ followers, following }) {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
@@ -25,6 +25,6 @@ const FriendsBar = ({ followers, following }) => {
       </div>
     )
   );
-};
+}
 
 export default FriendsBar;

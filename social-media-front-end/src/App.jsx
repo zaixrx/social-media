@@ -9,7 +9,6 @@ import Profile from "./routes/profile";
 import SignInForm from "./routes/signinForm";
 import SignUpForm from "./routes/signUpForm";
 import Chat from "./routes/chat";
-import { getToken } from "./utils/token";
 
 function App() {
   const [user, setUser] = useState({});
@@ -51,7 +50,7 @@ function App() {
             />
             <Route path="/signup" element={<SignUpForm />} />
             <Route path="/signin" element={<SignInForm />} />
-            <Route path="/notfound" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </>

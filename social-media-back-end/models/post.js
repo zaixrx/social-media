@@ -17,10 +17,7 @@ const postSchema = new mongoose.Schema({
     ref: "User",
   },
   caption: String,
-  publishDate: {
-    type: Date,
-    default: Date.now(),
-  },
+  publishDate: Date,
   imagePath: String,
   likes: [likeSchema],
   comments: [commentSchema],

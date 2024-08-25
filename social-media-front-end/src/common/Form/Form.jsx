@@ -86,7 +86,6 @@ class Form extends Component {
       };
 
       reader.readAsDataURL(image);
-      console.log();
     } catch {}
   };
 

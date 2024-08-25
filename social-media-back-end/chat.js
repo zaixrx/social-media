@@ -134,9 +134,7 @@ module.exports = function (server) {
         if (messageFiles?.length) {
           for (let i = 0; i < messageFiles.length; i++) {
             const file = messageFiles[i];
-            const fileExtension =
-              file.type.slice("/")[0] === "image" ? "png" : "mp4";
-            const fileName = `${message._id}_${index}.${fileExtension}`;
+            const fileName = `${message._id}_${i}.${file.extension}`;
 
             const directoryCreatedSuccessfully = createFile(
               file.data,

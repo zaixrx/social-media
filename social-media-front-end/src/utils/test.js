@@ -1,10 +1,3 @@
-import { useNavigate /* other hooks */ } from "react-router-dom";
-
-const withRouter = (WrappedComponent) => (props) => {
-  const navigate = useNavigate();
-  // other hooks
-
-  return <WrappedComponent {...props} {...{ navigate /* other hooks */ }} />;
-};
-
-export default withRouter;
+export function sleep(ms = 2000) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

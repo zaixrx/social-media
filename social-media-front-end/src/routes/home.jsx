@@ -5,6 +5,7 @@ import Friends from "../components/friendsBar.jsx";
 import SharePost from "../components/sharePost.jsx";
 import { getPosts } from "../services/posts.js";
 import EditPost from "../components/editPost.jsx";
+import { showMessage } from "../utils/logging.js";
 
 function Home({ user }) {
   const [posts, setPosts] = useState([]);
@@ -13,10 +14,9 @@ function Home({ user }) {
    * 74 - جامعة العلوم والتكنولوجيا هواري. بومدين(الجزائر)
    * 87 - المدرسة الوطنية العليا للإعلام الآلي بالجزائر(الجزائر)
    * 88 - المدرسة العليا للإعلام الآلي سيدي بلعباس
-   * 89 - المدرسة العليا في علوم وتكنولوجيات الإعلام الآلي والرقمنة بجاية
+   * 89 - المدرسة العليا في علوم وتكنولوجيات الإعلام الآلي والرقمنة بجاية => ESTIN
    * 90 -  المدرسة الوطنية العليا للذكاء الاصطناعي الجزائر
    * 93 - المدرسة الوطنية العليا للأمن السيبراني الجزائر
-   *
    */
 
   // Father: 109680887052050008
@@ -46,19 +46,32 @@ function Home({ user }) {
 
   function handlePostEdit(post) {
     if (!asyncFunctionReference) return;
-    asyncFunctionReference(post).catch((error) => console.log(error.message));
+    asyncFunctionReference(post).catch((error) =>
+      showMessage(
+        `Internal Application Error: ${error.message}\nPlease report this bug to my discord account <bold>zaizr</bold>`
+      )
+    );
   }
 
   return (
     <>
-      <EditPost getDataReference={getDataReference} user={user} />
+      <EditPost
+        user={user}
+        getDataReference={getDataReference}
+        onPostEdit={() => window.location.reload()}
+      />
       <div className="container my-3">
         <div className="row g-4">
           <div className="col-lg-3 section">
             <ProfileBar user={user} />
           </div>
           <div className="col-md-8 col-lg-6 vstack gap-4">
-            <SharePost user={user} />
+            <SharePost
+              user={user}
+              onNewPost={() => {
+                window.location.reload();
+              }}
+            />
             {posts.map((post) => {
               return (
                 <Post

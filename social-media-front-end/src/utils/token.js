@@ -1,3 +1,7 @@
+export function removeToken() {
+  localStorage.removeItem("token");
+}
+
 export function getToken() {
   const result = localStorage.getItem("token");
   return result;

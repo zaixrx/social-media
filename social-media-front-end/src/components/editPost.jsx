@@ -1,163 +1,122 @@
-import React, { createRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { editPost, getPostImage } from "../services/posts";
-import Form from "../common/Form/Form";
 import { getToken } from "../utils/token";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Modal } from "bootstrap";
+import { showMessage } from "../utils/logging";
+import { getFileUrl } from "../utils/file";
+import PopUp from "../common/PopUp";
+import TextArea from "../common/Form/TextArea";
 
-class EditPost extends Form {
-  fileInputRef = createRef(null);
-  errorValidation = false;
-  modal = undefined;
-  state = {
-    post: {},
-    data: {
-      image: {},
-      imagePath: "",
-      caption: "",
-    },
-  };
+function EditPost({ user, getDataReference, onPostEdit }) {
+  const fileInputRef = useRef(null);
+  const [file, setFile] = useState({});
+  const [postID, setPostId] = useState("");
+  const [caption, setCaption] = useState("");
 
   // Called once the model is shown.
   // Think of it as (async void componentDidMount())
-  getData = async (post) => {
-    console.log(post);
-
-    const { _image, _imagePath, _caption } = this.state.data;
-    if (_image && _imagePath && _caption) return;
+  async function getData({ _id, imagePath, caption: _caption }) {
+    if (!imagePath && !_caption) return;
 
     try {
-      let { data } = { ...this.state };
-      const { imagePath, caption } = post;
-      const image = imagePath && (await getPostImage(imagePath));
+      const _file = await getPostImage(imagePath);
+      if (_file) _file.url = imagePath;
 
-      data = {
-        caption,
-        imagePath,
-        image,
-      };
-
-      this.setState({ post, data });
+      setFile(_file || {});
+      setCaption(_caption);
+      setPostId(_id);
     } catch (error) {
-      console.log(`Can't get PostImage => ${error.message}`);
+      showMessage(`Can't fetch post data ${error.message}`);
     }
 
-    if (!this.modal) this.modal = new Modal("#editPostModal");
-    this.modal.show();
-  };
-
-  componentDidMount() {
-    this.props.getDataReference(this.getData);
+    new Modal("#editPostModal").show();
   }
 
-  doSubmit = async () => {
-    const { post } = this.state;
-    const { image, caption } = this.state.data;
+  useEffect(() => {
+    getDataReference(getData);
+  }, []);
 
-    let formData = new FormData();
-    formData.append("image", image);
-    formData.append("caption", caption);
-
+  async function handleFormSubmit() {
     const token = getToken();
 
-    try {
-      await editPost(post._id, formData, token);
+    let formData = new FormData();
+    formData.append("image", file);
+    formData.append("caption", caption);
 
-      // TODO: Client Prediction && Server Reconciliation
-      window.location.reload();
+    try {
+      await editPost(postID, formData, token);
+      onPostEdit();
     } catch (error) {
-      if (error.response) console.log(error.response.data);
-      alert(error.message);
+      showMessage(
+        `Failed to Edit Post: ${error.response?.data || error.message}`
+      );
     }
-  };
-
-  handleFileChange = ({ currentTarget: input }) => {
-    const image = input.files[0];
-    if (!image) return;
-
-    try {
-      const reader = new FileReader();
-      const data = { ...this.state.data };
-
-      reader.onload = (e) => {
-        data.imagePath = e.target.result;
-        data.image = input.files[0];
-
-        this.setState({ data });
-      };
-
-      reader.readAsDataURL(image);
-    } catch {}
-  };
-
-  render() {
-    const { user } = this.props;
-    const { image, imagePath } = this.state.data;
-
-    return (
-      <div className="modal fade" id="editPostModal">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h1 className="modal-title fs-5">Post Update</h1>
-              <button
-                type="button"
-                className="btn-close shadow-none"
-                onClick={() => {
-                  this.modal.hide();
-                }}
-              />
-            </div>
-            <div className="modal-body">
-              <div className="d-flex gap-2 mb-1">
-                <img
-                  src={user.avatarPath}
-                  height={45}
-                  width={45}
-                  className="avatar rounded-circle"
-                />
-                {this.renderTextArea("caption", "Write your thoughts...")}
-              </div>
-              <>
-                <p className="muted mb-2">Upload Image</p>
-                <div
-                  onClick={() => this.fileInputRef.current.click()}
-                  className="drop-box d-flex flex-column justify-content-center align-items-center w-100 h-100"
-                >
-                  {imagePath ? (
-                    <>
-                      <img className="drop-box-file" src={imagePath} />
-                      <p className="fs-6 mt-2 d-inline-block text-truncate">
-                        {image.name}
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon
-                        style={{ fontSize: "4rem" }}
-                        icon="fa-regular fa-image"
-                      />
-                      <span className="mt-2">Select an Image</span>
-                    </>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  accept="image/png, image/jpg, image/gif, image/jpeg"
-                  onChange={this.handleFileChange}
-                  ref={this.fileInputRef}
-                  style={{ display: "none" }}
-                />
-              </>
-            </div>
-            <div className="modal-footer d-flex justify-content-between">
-              {this.renderButton("Publish Post")}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
   }
+
+  async function handleFileChange({ target: input }) {
+    const inputFile = input.files[0];
+    if (!inputFile) return;
+    inputFile.url = getFileUrl(inputFile);
+    setFile(inputFile);
+  }
+
+  return (
+    <PopUp
+      modalId="editPostModal"
+      headerLabel="Update The Post"
+      onSubmit={handleFormSubmit}
+    >
+      <div className="d-flex gap-2 mb-1">
+        <img
+          src={user.avatarPath}
+          height={45}
+          width={45}
+          className="avatar rounded-circle"
+        />
+        <TextArea
+          placeholder="Publish your sad thoughts to this mad blue sphere that is rotating around (7.2921150 ± 0.0000001)×10^(−5) (rad/s)..."
+          setter={setCaption}
+          value={caption}
+          className="flex-grow-1"
+        />
+      </div>
+      <>
+        <p className="muted mb-2">Upload Image</p>
+        <div
+          onClick={() => fileInputRef.current.click()}
+          className="drop-box d-flex flex-column justify-content-center align-items-center w-100 h-100"
+        >
+          {file.url ? (
+            <>
+              <img className="drop-box-file" src={file.url} />
+              <p
+                className="fs-6 mt-2 d-inline-block text-truncate"
+                style={{ maxWidth: 200 }}
+              >
+                {file.name}
+              </p>
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon
+                style={{ fontSize: "4rem" }}
+                icon="fa-regular fa-image"
+              />
+              <span className="mt-2">Select an Image</span>
+            </>
+          )}
+        </div>
+        <input
+          type="file"
+          accept="image/png, image/jpg, image/gif, image/jpeg"
+          onChange={handleFileChange}
+          ref={fileInputRef}
+          style={{ display: "none" }}
+        />
+      </>
+    </PopUp>
+  );
 }
 
 export default EditPost;

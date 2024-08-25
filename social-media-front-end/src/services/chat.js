@@ -16,7 +16,7 @@ export function start(
   messageEmojiHandler
 ) {
   try {
-    socket = io("ws://192.168.100.3:3000");
+    socket = io(process.env.REACT_APP_SOCKET_URL);
     userID = _userID;
 
     socket.emit("join", _userID);

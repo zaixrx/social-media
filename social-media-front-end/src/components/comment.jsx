@@ -5,7 +5,14 @@ import { getDateString } from "../utils/time";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DetailsDropDown from "./detailsDropDown";
 
-function Comment({ comment, onCommentEdit, onCommentDelete, isOwner }) {
+function Comment({
+  comment,
+  onCommentEdit,
+  onCommentDelete,
+  onCommentReplyTriggerd,
+  isOwner,
+  currentUser,
+}) {
   const [user, setUser] = useState({});
   const [editMode, setEditMode] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -57,62 +64,100 @@ function Comment({ comment, onCommentEdit, onCommentDelete, isOwner }) {
 
   return (
     comment && (
-      <div className="d-flex gap-2 border-top py-3">
-        <Link to={userProfileURL}>
-          <img
-            height={35}
-            width={35}
-            src={user.avatarPath}
-            className="avatar rounded-circle"
-          />
-        </Link>
-        <div className="comment-text">
-          <div className="d-flex align-items-center">
-            <Link className="fs-6 fw-bold text-black" to={userProfileURL}>
-              @{user.username}
-            </Link>
-            <small className="dot">
-              {getDateString(new Date(comment.publishDate))}
-            </small>
-          </div>
-          <div className="input-group">
-            <input
-              type="text"
-              style={{ display: editMode ? "block" : "none" }}
-              placeholder="Edit this Comment..."
-              className="form-control shadow-none"
-              onKeyDown={handleEditInputKeyPress}
-              onChange={handleEditInputChange}
-              ref={editInput}
+      <div className="d-flex flex-column gap-2">
+        <div className="d-flex">
+          <Link to={userProfileURL}>
+            <img
+              height={40}
+              width={40}
+              src={user.avatarPath}
+              className="avatar rounded-circle"
             />
-            <button
-              className="btn btn-primary"
-              style={{ display: editMode ? "block" : "none" }}
-              onClick={localEditComment}
-            >
-              <FontAwesomeIcon icon="fa-regular fa-paper-plane" />
-            </button>
+          </Link>
+          <div className="comment-text ms-3 me-1" style={{ minWidth: 250 }}>
+            <div className="d-flex gap-2 align-items-center justify-content-between">
+              <Link className="fw-bold text-black" to={userProfileURL}>
+                {user.firstName} {user.lastName}
+              </Link>
+              <small>{getDateString(new Date(comment.publishDate))}</small>
+            </div>
+            <div className="input-group">
+              <input
+                type="text"
+                style={{ display: editMode ? "block" : "none" }}
+                placeholder="Edit this Comment..."
+                className="form-control shadow-none"
+                onKeyDown={handleEditInputKeyPress}
+                onChange={handleEditInputChange}
+                ref={editInput}
+              />
+              <button
+                className="btn btn-primary"
+                style={{ display: editMode ? "block" : "none" }}
+                onClick={localEditComment}
+              >
+                <FontAwesomeIcon icon="fa-regular fa-paper-plane" />
+              </button>
+            </div>
+            <p style={{ display: editMode ? "none" : "block" }}>
+              {comment.value}
+            </p>
           </div>
-          <p style={{ display: editMode ? "none" : "block" }}>
-            {comment.value}
-          </p>
+          <div>
+            <DetailsDropDown expanderID="commentDetailsCard">
+              <div
+                className="dropdown-item"
+                onClick={() =>
+                  onCommentReplyTriggerd(comment._id, user.username)
+                }
+              >
+                Reply
+              </div>
+              {isOwner && (
+                <>
+                  <div className="dropdown-item" onClick={triggerEditMode}>
+                    Edit
+                  </div>
+                  <div
+                    className="dropdown-item"
+                    onClick={() => onCommentDelete(comment._id)}
+                  >
+                    Delete
+                  </div>
+                </>
+              )}
+            </DetailsDropDown>
+          </div>
         </div>
-        {isOwner && (
-          <DetailsDropDown expanderID="commentDetailsCard">
-            <div className="dropdown-item" onClick={triggerEditMode}>
-              Edit
-            </div>
-            <div
-              className="dropdown-item"
-              onClick={() => onCommentDelete(comment._id)}
-            >
-              Delete
-            </div>
-          </DetailsDropDown>
-        )}
+        <div className="ms-5">{getChildComments()}</div>
       </div>
     )
   );
+
+  function getChildComments() {
+    if (!comment.children) return;
+
+    let children = [];
+
+    for (let i = 0; i < comment.children.length; i++) {
+      const child = comment.children[i];
+      if (!child) continue;
+
+      children.push(
+        <Comment
+          key={child._id}
+          comment={child}
+          isOwner={currentUser._id === child.user}
+          onCommentEdit={onCommentEdit}
+          onCommentDelete={onCommentDelete}
+          onCommentReplyTriggerd={onCommentReplyTriggerd}
+          currentUser={currentUser}
+        />
+      );
+    }
+
+    return children;
+  }
 }
 
 export default Comment;

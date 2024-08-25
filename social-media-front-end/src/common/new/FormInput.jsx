@@ -5,6 +5,7 @@ import Joi from "joi";
 function FormInput({
   setter,
   label,
+  value,
   innerRef,
   className = "",
   validationPath,
@@ -28,6 +29,7 @@ function FormInput({
     <div className="form-floating mb-2">
       <input
         name={name}
+        value={value}
         ref={innerRef}
         onChange={({ target }) => {
           validate(target.value);

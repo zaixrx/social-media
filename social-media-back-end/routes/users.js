@@ -209,7 +209,7 @@ router.put(
         const newAvatarPath = file && generatePath(file.path);
         const avatarChanged = file && u.avatarPath !== newAvatarPath;
         if (u.avatarPath !== process.env.DEFAULT_AVATAR_PATH && avatarChanged)
-          deleteFile(getNameFromPath(u.avatarPath));
+          deleteFile(getNameFromPath(u.avatarPath), console.error);
 
         if (file) u.avatarPath = newAvatarPath;
         if (body.firstName) u.firstName = body.firstName;

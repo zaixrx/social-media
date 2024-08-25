@@ -11,11 +11,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Message from "../components/message";
 import { getFileUrl } from "../utils/file";
 import { showMessage } from "../utils/logging";
+import Video from "../common/Video";
 
 function Chat({ user }) {
-  const MAX_FILES_LENGTH = 4;
-  const MAX_FILE_SIZE_IN_MEGABYTE = 20;
-
   const [messages, setMessages] = useState([]);
   const [contactedMember, setContactedMember] = useState({});
   const [reply, setReply] = useState();
@@ -45,7 +43,7 @@ function Chat({ user }) {
 
       for (let i = 0; i < files.length; i++) {
         const file = _files[i];
-        file.url = await getFileUrl(file.data);
+        file.url = getFileUrl(file.data);
       }
 
       setFiles(_files);
@@ -142,28 +140,38 @@ function Chat({ user }) {
     messageInput.current.focus();
   }
 
+  // TODO: Fix this after adding more than 4 files feature
   function addFiles(newFiles) {
-    if (files.length >= MAX_FILES_LENGTH) return;
+    if (files.length > process.env.REACT_APP_MAX_FILES)
+      return showMessage(
+        `You can't upload more than ${process.env.REACT_APP_MAX_FILES} files`
+      );
     if (reply) setReply(false);
 
     setFiles((_files) => {
       const pushFile = (file) => {
-        if (file.size / (1024 * 1024) > MAX_FILE_SIZE_IN_MEGABYTE)
+        if (
+          file.size / (1024 * 1024) >
+          process.env.REACT_APP_MAX_FILE_SIZE_IN_MB
+        )
           return showMessage(
-            `You have excedded tha maximum file size (${MAX_FILE_SIZE_IN_MEGABYTE}MB)`
+            `You have excedded tha maximum file size (${process.env.REACT_APP_MAX_FILE_SIZE_IN_MB}MB)`
           );
+
+        const array = file.name.split(".");
 
         _files.push({
           data: file,
           type: file.type,
+          extension: array[array.length - 1],
         });
       };
 
       const filesLength = _files.length;
       const newLength = filesLength + newFiles.length;
 
-      const availabe = MAX_FILES_LENGTH - filesLength;
-      if (availabe > 0 && newLength > MAX_FILES_LENGTH) {
+      const availabe = process.env.REACT_APP_MAX_FILES - filesLength;
+      if (availabe > 0 && newLength > process.env.REACT_APP_MAX_FILES) {
         for (let i = 0; i < availabe; i++) {
           const currentFile = newFiles[i];
           pushFile(currentFile);
@@ -240,14 +248,39 @@ function Chat({ user }) {
               <div className="py-2 d-flex gap-3 w-100">
                 {files.map((file, index) => (
                   <div key={index} className="position-relative">
-                    <img
-                      src={file.url}
-                      height={100}
-                      width={100}
-                      className="rounded-4 avatar border border-secondary border-2"
-                    />
+                    {file.type.split("/")[0] === "image" && (
+                      <div className="position-relative">
+                        <img
+                          src={file.url}
+                          height={100}
+                          width={100}
+                          className="rounded-4 avatar border border-dark border-2"
+                        />
+                        <FontAwesomeIcon
+                          className="position-absolute top-50 start-50 translate-middle p-3 rounded-circle bg-dark bg-gradient text-white"
+                          style={{ zIndex: 1, width: 30, height: 30 }}
+                          icon="fa-regular fa-image"
+                        />
+                      </div>
+                    )}
+                    {file.type.split("/")[0] === "video" && (
+                      <div className="position-relative">
+                        <video
+                          src={file.url}
+                          width={100}
+                          height={100}
+                          className="rounded-4 avatar border border-dark border-2"
+                        />
+                        <FontAwesomeIcon
+                          className="position-absolute top-50 start-50 translate-middle p-3 rounded-circle bg-dark bg-gradient text-white"
+                          style={{ zIndex: 1, width: 30, height: 30 }}
+                          icon="fa-solid fa-video"
+                        />
+                      </div>
+                    )}
+
                     <div
-                      className="rounded-circle clickable bg-secondary text-white fs-5 d-flex align-items-center justify-content-center"
+                      className="rounded-circle clickable bg-dark bg-gradient text-white fs-5 d-flex align-items-center justify-content-center"
                       style={{
                         width: 25,
                         height: 25,
@@ -269,13 +302,17 @@ function Chat({ user }) {
                     </div>
                   </div>
                 ))}
-                {files.length < MAX_FILES_LENGTH && (
+                {files.length < process.env.REACT_APP_MAX_FILES && (
                   <div
-                    className="d-flex align-items-center justify-content-center rounded-4 fs-1 text-secondary clickable bg-white border border-secondary border-2"
+                    className="d-flex align-items-center justify-content-center rounded-4 fs-1 text-white  clickable bg-white border border-dark border-2"
                     style={{ height: 100, width: 100 }}
                     onClick={() => fileInput.current.click()}
                   >
-                    <FontAwesomeIcon icon="fa-regular fa-image" />
+                    <FontAwesomeIcon
+                      className="rounded-circle bg-dark bg-gradient text-white p-2"
+                      style={{ width: 25, height: 25 }}
+                      icon="fa-solid fa-plus"
+                    />
                   </div>
                 )}
               </div>
