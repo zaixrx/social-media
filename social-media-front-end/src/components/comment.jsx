@@ -129,17 +129,17 @@ function Comment({
             </DetailsDropDown>
           </div>
         </div>
-        <div className="ms-5">{getChildComments()}</div>
+        {getChildComments()?.length ? (
+          <div className="ms-5">{getChildComments()}</div>
+        ) : null}
       </div>
     )
   );
 
   function getChildComments() {
-    if (!comment.children) return;
-
     let children = [];
 
-    for (let i = 0; i < comment.children.length; i++) {
+    for (let i = 0; i < comment.children?.length; i++) {
       const child = comment.children[i];
       if (!child) continue;
 

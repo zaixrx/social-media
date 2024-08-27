@@ -10,7 +10,12 @@ const upload = require("../middleware/upload.js");
 const asyncMiddleware = require("../middleware/async.js");
 const validateObjectId = require("../middleware/validateObjectId.js");
 const { Post, validatePost } = require("../models/post.js");
-const { commentValidate, getComment } = require("../models/comment.js");
+const {
+  commentValidate,
+  getComment,
+  deleteComment,
+  deleteCommentChildren,
+} = require("../models/comment.js");
 const { User } = require("../models/user.js");
 
 router.get(
@@ -201,7 +206,7 @@ router.delete(
     switch (type) {
       case "comment":
         const commentID = headers["x-comment-id"];
-        const commentToDelete = getComment(post, commentID);
+        const commentToDelete = getComment(post.comments, commentID);
         if (!commentToDelete)
           return error(
             res,
@@ -214,16 +219,16 @@ router.delete(
 
         // Remove from post.comments 1
         // Remove from parent.children 2
-        // Remove commentToDelete.children from post.comments 3
+        // Remove commentToDelete.children.children.children.children... from post.comments 3
 
         const { comments } = post;
         if (comments) {
           // Step 1
-          comments.splice(comments.indexOf(commentToDelete), 1);
+          deleteComment(comments, commentToDelete);
 
           // Step 2
           const commentToDeleteParent = getComment(
-            post,
+            post.comments,
             commentToDelete.parent
           );
           if (commentToDeleteParent) {
@@ -232,13 +237,7 @@ router.delete(
           }
 
           //Step 3
-          const { children } = commentToDelete;
-          if (children.length) {
-            comments.forEach((comment, index) => {
-              if (!children.includes(comment._id)) return;
-              comments.splice(index, 1);
-            });
-          }
+          deleteCommentChildren(comments, commentToDelete);
         }
 
         await post.save();

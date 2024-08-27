@@ -2,17 +2,22 @@ import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router-dom";
 import {
-  deletePost,
-  likePost,
-  publishComment,
-  editComment,
-  deleteComment,
+  sendPostDeleteRequest,
+  sendPostLikeRequest,
+  sendPostCommentRequest,
+  sendCommentEditRequest,
+  sendCommentDeleteRequest,
 } from "../services/posts";
+import {
+  getComment,
+  deleteComment,
+  deleteCommentChildren,
+  prepareComments,
+} from "../utils/comments";
 import Comment from "./comment";
 import { getToken } from "../utils/token";
 import { getDateString } from "../utils/time";
 import { showMessage } from "../utils/logging";
-import _ from "lodash";
 import Image from "../common/Image";
 
 function Post({ currentUser, user, post, onPostEdit }) {
@@ -25,6 +30,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
     const { comments: _comments, likes } = post;
 
     prepareComments(_comments);
+
     setComments(_comments);
 
     if (!likes) return;
@@ -38,9 +44,9 @@ function Post({ currentUser, user, post, onPostEdit }) {
     setLikes({ liked, count: likesCount });
   }, []);
 
-  async function handleDelete() {
+  async function handlePostDelete() {
     try {
-      await deletePost(post._id, getToken());
+      await sendPostDeleteRequest(post._id, getToken());
       window.location.reload();
     } catch (error) {
       alert(error.message);
@@ -54,7 +60,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
     count += liked ? 1 : -1;
 
     try {
-      await likePost(liked, post._id, getToken());
+      await sendPostLikeRequest(liked, post._id, getToken());
       setLikes({ liked, count });
     } catch (error) {
       if (error.response) console.log(error.response.data);
@@ -67,7 +73,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
     if (!comment.trim()) return;
 
     try {
-      const { data: receivedComment } = await publishComment(
+      const { data: receivedComment } = await sendPostCommentRequest(
         comment,
         currentCommentParent._id,
         post._id,
@@ -77,7 +83,8 @@ function Post({ currentUser, user, post, onPostEdit }) {
       const _comments = [...comments];
 
       if (receivedComment.parent) {
-        const commentParent = getComment(receivedComment.parent);
+        const commentParent = getComment(_comments, receivedComment.parent);
+        commentParent?.children.push(receivedComment);
       }
 
       _comments.push(receivedComment);
@@ -101,7 +108,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
     const index = comments.indexOf(comment);
 
     try {
-      const { data: receivedComment } = await editComment(
+      const { data: receivedComment } = await sendCommentEditRequest(
         value,
         _id,
         post._id,
@@ -131,37 +138,29 @@ function Post({ currentUser, user, post, onPostEdit }) {
     if (!commentToDelete)
       return showMessage("(Comment[]).Contains(comment) => false");
 
-    try {
-      await deleteComment(_id, post._id, getToken());
-      const _comments = [...comments];
+    await sendCommentDeleteRequest(_id, post._id, getToken());
+    const _comments = [...comments];
 
-      // Remove from post.comments 1
-      // Remove from parent.children 2
-      // Remove commentToDelete.children from post.comments 3
+    // Remove from post.comments 1
+    // Remove from parent.children 2
+    // Remove commentToDelete.children.children.children.children... from post.comments 3
 
-      // Step 1
-      _comments.splice(_comments.indexOf(commentToDelete), 1);
+    // Step 1
+    deleteComment(_comments, commentToDelete);
 
-      // Step 2
-      const commentToDeleteParent = getComment(commentToDelete.parent);
-      if (commentToDeleteParent) {
-        const { children } = commentToDeleteParent;
-        children.splice(children.indexOf(commentToDelete), 1);
-      }
-
-      //Step 3
-      const { children } = commentToDelete;
-      if (children.length) {
-        _comments.forEach((comment, index) => {
-          if (!children.includes(comment)) return;
-          _comments.splice(index, 1);
-        });
-      }
-
-      setComments(_comments);
-    } catch ({ response, message }) {
-      showMessage("Could not remove message", response?.data || message);
+    // Step 2
+    const commentToDeleteParent = getComment(_comments, commentToDelete.parent);
+    if (commentToDeleteParent) {
+      const { children } = commentToDeleteParent;
+      deleteComment(children, commentToDelete);
+      showMessage(children.includes(commentToDelete));
     }
+
+    //Step 3
+    if (commentToDelete.children.length)
+      deleteCommentChildren(_comments, commentToDelete);
+
+    setComments(_comments);
   }
 
   function handleCommentReplyTriggerd(parentCommentID, parentUsername) {
@@ -176,10 +175,6 @@ function Post({ currentUser, user, post, onPostEdit }) {
       _id: parentCommentID,
       username: parentUsername,
     });
-  }
-
-  function getComment(commentID) {
-    return comments.find((comment) => comment._id === commentID);
   }
 
   return (
@@ -231,7 +226,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
                 <li>
                   <div
                     className="dropdown-item clickable"
-                    onClick={handleDelete}
+                    onClick={handlePostDelete}
                   >
                     <i className="bi bi-x-circle fa-fw pe-2"></i>Delete post
                   </div>
@@ -240,7 +235,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
             </div>
           )}
         </div>
-        <div className="card-body pb-0">
+        <div className="card-body">
           <div className="mb-3">
             <p className="mb-0">{post.caption}</p>
             {post.imagePath && (
@@ -319,18 +314,6 @@ function Post({ currentUser, user, post, onPostEdit }) {
       </div>
     )
   );
-
-  function prepareComments(comments) {
-    for (let i = 0; i < comments.length; i++) {
-      const comment = comments[i];
-
-      if (!comment.children) continue;
-
-      for (let j = 0; j < comment.children.length; j++) {
-        comment.children[j] = getComment(comment.children[j]);
-      }
-    }
-  }
 }
 
 export default Post;

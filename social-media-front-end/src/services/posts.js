@@ -24,7 +24,7 @@ export async function editPost(_id, data, token) {
   });
 }
 
-export async function deletePost(_id, token) {
+export async function sendPostDeleteRequest(_id, token) {
   return await axios.delete(apiEndpoint + _id, {
     headers: {
       "x-auth-token": token,
@@ -33,7 +33,7 @@ export async function deletePost(_id, token) {
   });
 }
 
-export async function likePost(like, _id, token) {
+export async function sendPostLikeRequest(like, _id, token) {
   return await axios.put(
     apiEndpoint + _id,
     { like },
@@ -41,7 +41,12 @@ export async function likePost(like, _id, token) {
   );
 }
 
-export async function publishComment(comment, commentParent, _id, token) {
+export async function sendPostCommentRequest(
+  comment,
+  commentParent,
+  _id,
+  token
+) {
   return await axios.put(
     apiEndpoint + _id,
     // I put "parent" beacause of mongoose comment schema is named "parent"
@@ -50,7 +55,7 @@ export async function publishComment(comment, commentParent, _id, token) {
   );
 }
 
-export async function editComment(comment, _id, _postId, token) {
+export async function sendCommentEditRequest(comment, _id, _postId, token) {
   return await axios.put(
     apiEndpoint + _postId,
     { comment },
@@ -64,7 +69,7 @@ export async function editComment(comment, _id, _postId, token) {
   );
 }
 
-export async function deleteComment(_id, _postId, token) {
+export async function sendCommentDeleteRequest(_id, _postId, token) {
   return await axios.delete(apiEndpoint + _postId, {
     headers: {
       "x-auth-token": token,

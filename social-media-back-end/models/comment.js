@@ -31,11 +31,29 @@ function commentValidate(value, res) {
   return error === undefined;
 }
 
-function getComment(post, commentID) {
-  if (!post || !commentID) return;
-  return post.comments?.find((c) => c._id.toString() === commentID.toString());
+function getComment(comments, commentID) {
+  if (!commentID) return;
+  return comments?.find((c) => c._id.toString() === commentID.toString());
+}
+
+function deleteComment(comments, comment) {
+  if (!comment) return;
+  return comments?.splice(comments?.indexOf(comment), 1);
+}
+
+function deleteCommentChildren(comments, commentToDelete) {
+  let childrenArray = commentToDelete.children;
+  childrenArray.forEach((childID) => {
+    const childComment = getComment(comments, childID);
+    if (childComment.children.length) {
+      deleteCommentChildren(comments, childComment);
+    }
+    deleteComment(comments, childComment);
+  });
 }
 
 exports.commentSchema = commentSchema;
 exports.commentValidate = commentValidate;
 exports.getComment = getComment;
+exports.deleteComment = deleteComment;
+exports.deleteCommentChildren = deleteCommentChildren;
