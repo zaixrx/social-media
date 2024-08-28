@@ -147,7 +147,7 @@ module.exports = function (server) {
               return console.log(directoryCreatedSuccessfully);
 
             message.files.push({
-              path: `${process.env.PROTOCOL}://${process.env.HOST_NAME}/chat/${roomf_id}/${fileName}`,
+              path: `${process.env.PROTOCOL}://${process.env.HOST_NAME}/chat/${room_id}/${fileName}`,
               type: file.type,
             });
           }
