@@ -147,11 +147,7 @@ module.exports = function (server) {
               return console.log(directoryCreatedSuccessfully);
 
             message.files.push({
-              path: `${process.env.PROTOCOL}://${process.env.HOST_NAME}${
-                process.env.NODE_ENV === "development"
-                  ? `:${process.env.PORT}`
-                  : ""
-              }:/chat/${room._id}/${fileName}`,
+              path: `${process.env.PROTOCOL}://${process.env.HOST_NAME}/chat/${roomf_id}/${fileName}`,
               type: file.type,
             });
           }
@@ -197,11 +193,7 @@ module.exports = function (server) {
       if (message.files.length) {
         message.files.forEach((file) => {
           const path = file.path.replace(
-            `http://${process.env.HOST_NAME}${
-              process.env.NODE_ENV === "development"
-                ? `:${process.env.PORT}`
-                : ""
-            }`,
+            `http://${process.env.HOST_NAME}`,
             "./public"
           );
 
