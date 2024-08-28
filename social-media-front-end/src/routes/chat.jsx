@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  deleteMessage,
-  sendMessage,
-  editMessage,
+  sendMessageDeleteRequest,
+  sendMessageRequest,
+  sendMessageEditRequest,
   start,
-  messageEmoji,
+  sendMessageEmojiReactionRequest,
 } from "../services/chat";
 import { Link, useParams } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Message from "../components/message";
 import { getFileUrl } from "../utils/file";
 import { showMessage } from "../utils/logging";
-import Video from "../common/Video";
 
 function Chat({ user }) {
   const [messages, setMessages] = useState([]);
@@ -114,7 +113,7 @@ function Chat({ user }) {
     const message = messageInput.current.value;
     if (!message.trim() && !files.length) return;
     files.forEach((file) => delete file.url);
-    await sendMessage(message, reply?._id, files);
+    await sendMessageRequest(message, reply?._id, files);
 
     // reset
     messageInput.current.value = "";
@@ -123,7 +122,7 @@ function Chat({ user }) {
   }
 
   async function handleMessageDeleteSend(messageID) {
-    await deleteMessage(messageID);
+    await sendMessageDeleteRequest(messageID);
   }
 
   async function handleMessageEmojiSend(messageID, emoji) {
@@ -132,7 +131,7 @@ function Chat({ user }) {
       (r) => r.user === user._id && r.emoji === emoji
     );
 
-    await messageEmoji(messageID, _emoji ? "" : emoji);
+    await sendMessageEmojiReactionRequest(messageID, _emoji ? "" : emoji);
   }
 
   async function handleReplySelect(message) {
@@ -222,7 +221,7 @@ function Chat({ user }) {
                 message={message}
                 onMessageDelete={handleMessageDeleteSend}
                 onEditMessage={async (messageID, newMessage) =>
-                  await editMessage(messageID, newMessage)
+                  await sendMessageEditRequest(messageID, newMessage)
                 }
                 onEmojiSelected={handleMessageEmojiSend}
                 onReply={handleReplySelect}

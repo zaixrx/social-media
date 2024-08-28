@@ -23,7 +23,7 @@ export function start(
 
     socket.on("join-received", async (socketID) => {
       serverSocketID = socketID;
-      await demandRoom([_userID, _userContactID]);
+      await sendDemandRoomRequest([_userID, _userContactID]);
     });
 
     socket.on("demand-room-handled", (_room) => {
@@ -59,27 +59,27 @@ export function start(
   }
 }
 
-export async function demandRoom(members) {
+export async function sendDemandRoomRequest(members) {
   if (!members || members.length < 2) return;
   await socket.emit("demand-room", members, serverSocketID);
 }
 
-export async function sendMessage(message, rootMessage, files) {
+export async function sendMessageRequest(message, rootMessage, files) {
   if ((!message.trim() && !files.length) || !socket || !room) return;
   await socket.emit("message", message, userID, room._id, rootMessage, files);
 }
 
-export async function deleteMessage(messageID) {
+export async function sendMessageDeleteRequest(messageID) {
   if (!messageID) return;
   await socket.emit("message-delete", messageID, userID, room._id);
 }
 
-export async function editMessage(messageID, newMessage) {
+export async function sendMessageEditRequest(messageID, newMessage) {
   if (!messageID) return;
   await socket.emit("message-edit", messageID, newMessage, userID, room._id);
 }
 
-export async function messageEmoji(messageID, messageEmoji) {
+export async function sendMessageEmojiReactionRequest(messageID, messageEmoji) {
   if (!messageID) return;
   await socket.emit("message-emoji", messageID, messageEmoji, userID, room._id);
 }

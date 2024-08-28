@@ -62,9 +62,8 @@ function Post({ currentUser, user, post, onPostEdit }) {
     try {
       await sendPostLikeRequest(liked, post._id, getToken());
       setLikes({ liked, count });
-    } catch (error) {
-      if (error.response) console.log(error.response.data);
-      alert(error.message);
+    } catch ({ response, message }) {
+      showMessage(response ? response.data : message);
     }
   }
 
@@ -104,7 +103,11 @@ function Post({ currentUser, user, post, onPostEdit }) {
       return c._id === _id;
     });
 
-    if (!comment) console.log("(Comment[]).Contains(comment) => false");
+    if (!comment)
+      showMessage(
+        "Comment doesn't exist",
+        "Please report this to my discord 'zaizr'"
+      );
     const index = comments.indexOf(comment);
 
     try {
@@ -120,9 +123,8 @@ function Post({ currentUser, user, post, onPostEdit }) {
       setComments(_comments);
 
       return true;
-    } catch (error) {
-      if (error.response) console.log(error.response.data);
-      alert(error.message);
+    } catch ({ response, message }) {
+      showMessage(response ? response.data : message);
     }
 
     return false;
@@ -153,7 +155,6 @@ function Post({ currentUser, user, post, onPostEdit }) {
     if (commentToDeleteParent) {
       const { children } = commentToDeleteParent;
       deleteComment(children, commentToDelete);
-      showMessage(children.includes(commentToDelete));
     }
 
     //Step 3
@@ -293,22 +294,24 @@ function Post({ currentUser, user, post, onPostEdit }) {
             {currentCommentParent.username && (
               <p>Currently replying to {currentCommentParent.username}</p>
             )}
-            {comments.map((c) => {
-              if (c.parent) return;
+            <div style={{ overflowX: "auto" }}>
+              {comments.map((c) => {
+                if (c.parent) return;
 
-              return (
-                <Comment
-                  key={c._id}
-                  comment={c}
-                  isOwner={currentUser._id === c.user}
-                  onCommentEdit={handleCommentEdit}
-                  onCommentDelete={handleCommentDelete}
-                  onCommentReplyTriggerd={handleCommentReplyTriggerd}
-                  currentUser={currentUser}
-                  getComment={getComment}
-                />
-              );
-            })}
+                return (
+                  <Comment
+                    key={c._id}
+                    comment={c}
+                    isOwner={currentUser._id === c.user}
+                    onCommentEdit={handleCommentEdit}
+                    onCommentDelete={handleCommentDelete}
+                    onCommentReplyTriggerd={handleCommentReplyTriggerd}
+                    currentUser={currentUser}
+                    getComment={getComment}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
