@@ -1,5 +1,4 @@
 import axios from "axios";
-import { sleep } from "../utils/test.js";
 
 const apiEndpoint = `${process.env.REACT_APP_API_URL}/posts/`;
 

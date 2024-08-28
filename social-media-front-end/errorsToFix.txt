@@ -1,5 +1,3 @@
-// TODO: Fix Comment Delete => Done
-// TODO: Fix Comment Replies Display => Done
-// TODO: Extract Comment Utility Functions => Done
 // TODO: fix "ValidationError: Room validation failed: members.0.user: Path `user` is required., members.1.user: Path `user` is required." => Not Done
 // TODO: add the ability to reconnect when disconnected (websockets) => Not Done
+// TODO: Edit new comment replies
