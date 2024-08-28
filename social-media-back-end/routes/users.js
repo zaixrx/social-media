@@ -78,7 +78,7 @@ router.post(
       username: body.username,
       email: body.email,
       password: password,
-      avatarPath: `${process.env.PROTOCOL}://${process.env.HOST_NAME}/${process.env.DEFAULT_AVATAR_PATH}`,
+      avatarPath: process.env.DEFAULT_AVATAR_PATH,
     });
     await user.save();
 
@@ -208,11 +208,7 @@ router.put(
 
         const newAvatarPath = file && generatePath(file.path);
         const avatarChanged = file && u.avatarPath !== newAvatarPath;
-        if (
-          u.avatarPath !==
-            `${process.env.PROTOCOL}://${process.env.HOST_NAME}/${process.env.DEFAULT_AVATAR_PATH}` &&
-          avatarChanged
-        )
+        if (u.avatarPath !== process.env.DEFAULT_AVATAR_PATH && avatarChanged)
           deleteFile(getNameFromPath(u.avatarPath), console.error);
 
         if (file) u.avatarPath = newAvatarPath;
@@ -222,8 +218,7 @@ router.put(
         if (body.bio) u.bio = body.bio;
         if (body.email) u.email = body.email;
         if (body.passwrod) u.password = body.password;
-        if (!u.avatarPath)
-          u.avatarPath = `${process.env.PROTOCOL}://${process.env.HOST_NAME}/${process.env.DEFAULT_AVATAR_PATH}`;
+        if (!u.avatarPath) u.avatarPath = process.env.DEFAULT_AVATAR_PATH;
 
         await u.save();
         returnedUser = u;
