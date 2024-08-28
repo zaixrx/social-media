@@ -148,9 +148,9 @@ module.exports = function (server) {
 
             message.files.push({
               path: `${process.env.PROTOCOL}://${process.env.HOST_NAME}${
-                process.env.NODE_ENV === "production"
-                  ? ""
-                  : `:${process.env.PORT}`
+                process.env.NODE_ENV === "development"
+                  ? `:${process.env.PORT}`
+                  : ""
               }:/chat/${room._id}/${fileName}`,
               type: file.type,
             });
@@ -197,7 +197,11 @@ module.exports = function (server) {
       if (message.files.length) {
         message.files.forEach((file) => {
           const path = file.path.replace(
-            `http://${process.env.HOST_NAME}:${process.env.PORT}`,
+            `http://${process.env.HOST_NAME}${
+              process.env.NODE_ENV === "development"
+                ? `:${process.env.PORT}`
+                : ""
+            }`,
             "./public"
           );
 
