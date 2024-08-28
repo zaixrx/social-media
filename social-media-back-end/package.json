@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "config": "^3.3.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "fawn": "^2.1.5",
+    "jest": "^29.7.0",
+    "joi": "^17.13.3",
+    "joi-objectid": "^4.0.2",
+    "joy": "^0.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "mongoose": "^8.5.1",
+    "multer": "^1.4.5-lts.1",
+    "run-rs": "^0.7.7",
+    "socket.io": "^4.7.5"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
