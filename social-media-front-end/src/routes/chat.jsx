@@ -141,49 +141,40 @@ function Chat({ user }) {
 
   // TODO: Fix this after adding more than 4 files feature
   function addFiles(newFiles) {
-    if (files.length > process.env.REACT_APP_MAX_FILES)
-      return showMessage(
-        `You can't upload more than ${process.env.REACT_APP_MAX_FILES} files`
-      );
+    const { REACT_APP_MAX_FILES, REACT_APP_MAX_FILE_SIZE_IN_MB } = process.env;
+    if (files.length > REACT_APP_MAX_FILES) return;
     if (reply) setReply(false);
 
-    setFiles((_files) => {
-      const pushFile = (file) => {
-        if (
-          file.size / (1024 * 1024) >
-          process.env.REACT_APP_MAX_FILE_SIZE_IN_MB
-        )
+    setFiles(() => {
+      const currentFiles = [...files];
+
+      function pushFile(file) {
+        if (file.size / (1024 * 1024) > REACT_APP_MAX_FILE_SIZE_IN_MB)
           return showMessage(
-            `You have excedded tha maximum file size (${process.env.REACT_APP_MAX_FILE_SIZE_IN_MB}MB)`
+            `You have excedded tha maximum file size (${REACT_APP_MAX_FILE_SIZE_IN_MB}MB)`
           );
 
-        const array = file.name.split(".");
-
-        _files.push({
+        currentFiles.push({
           data: file,
           type: file.type,
-          extension: array[array.length - 1],
         });
-      };
+      }
 
-      const filesLength = _files.length;
-      const newLength = filesLength + newFiles.length;
+      const newLength = currentFiles.length + newFiles.length;
+      const availabe = REACT_APP_MAX_FILES - currentFiles.length;
 
-      const availabe = process.env.REACT_APP_MAX_FILES - filesLength;
-      if (availabe > 0 && newLength > process.env.REACT_APP_MAX_FILES) {
+      if (newLength > REACT_APP_MAX_FILES) {
         for (let i = 0; i < availabe; i++) {
           const currentFile = newFiles[i];
           pushFile(currentFile);
         }
       } else {
-        const _newFiles = [];
         newFiles.forEach((file) => {
           pushFile(file);
         });
-        _files = [...files, ..._newFiles];
       }
 
-      return _files;
+      return currentFiles;
     });
   }
 

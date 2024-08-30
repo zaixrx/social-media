@@ -4,4 +4,4 @@
 // TODO: Fix bio undefined => Done
 // TODO: real time reply => Done(I guess)
 // TODO: post edit => Done
-// TODO: Fix the files selector on chat
+// TODO: Fix the files selector on chat => DOne
