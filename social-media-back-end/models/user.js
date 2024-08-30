@@ -110,7 +110,7 @@ const put_userJoiSchema = Joi.object({
   firstName: Joi.string().label("First Name"),
   lastName: Joi.string().label("Last Name"),
   username: Joi.string().label("Username").lowercase().trim(),
-  bio: Joi.string().min(1).max(64),
+  bio: Joi.string().min(1).max(64).allow(""),
   password: Joi.string()
     .label("Password")
     .min(6)
