@@ -116,8 +116,8 @@ router.put(
     const { error } = put_userJoiSchema.validate(body);
     if (error) return res.status(400).send(error.details[0].message);
 
-    const u = await User.findById(_id);
-    if (!u) return res.status(404).send("User is not found");
+    const targetUser = await User.findById(_id);
+    if (!targetUser) return res.status(404).send("User is not found");
 
     const type = headers["x-type"];
     let returnedUser = undefined;
@@ -135,29 +135,23 @@ router.put(
         // follower: is ahmed
 
         const followerID = user._id;
-        if (!followerID)
-          return res.status(400).send("You must provide the follower _id.");
+        if (followerID === targetUser._id.toString())
+          return res.stauts(403).send("You can't follow your self.");
 
-        if (followerID === u._id.toString())
-          return res.stauts(403).send("You can't follow you're self.");
+        const me = await User.findById(followerID);
+        if (!me) return res.status(404).send("Your id doesn't exist.");
 
-        const follower = await User.findById(followerID);
-        if (!follower)
-          return res.status(404).send("The follower doesn't exist.");
-
-        if (u.followers.includes(follower._id)) {
-          return res
-            .status(400)
-            .send("Follower is already following this User.");
+        if (targetUser.followers.includes(me._id)) {
+          return res.status(400).send("You are already following this User.");
         }
+
         // TODO: Transaction
-        u.followers.push(followerID);
-        follower.following.push(u._id);
+        targetUser.followers.push(followerID);
+        me.following.push(targetUser._id);
 
-        await u.save();
-        await follower.save();
-
-        returnedUser = follower;
+        await targetUser.save();
+        await me.save();
+        returnedUser = me;
 
         break;
 
@@ -172,62 +166,58 @@ router.put(
         // splice me from following
 
         const _followerID = user._id;
-        if (!_followerID)
-          return res.status(400).send("You must provide the follower _id.");
-
-        if (_followerID === u._id.toString())
+        if (_followerID === targetUser._id.toString())
           return res.stauts(403).send("You can't unfollow you're self.");
 
-        const _follower = await User.findById(_followerID);
-        if (!_follower)
-          return res.status(404).send("The follower doesn't exist.");
+        const _me = await User.findById(_followerID);
+        if (!_me) return res.status(404).send("Your user doesn't exist.");
 
-        const followerIndex = u.followers.indexOf(_followerID); // Error followerID is not of type ObjectID
-        const userIndex = _follower.following.indexOf(u._id);
+        const followerIndex = targetUser.followers.indexOf(_followerID);
+        const userIndex = _me.following.indexOf(targetUser._id);
         if (followerIndex === -1 || userIndex === -1)
-          return res.status(404).send("Follower isn't following this user.");
+          return res.status(404).send("You aren't following this user.");
 
         // TODO: Transaction
-        u.followers.splice(followerIndex, 1);
-        _follower.following.splice(userIndex, 1);
+        targetUser.followers.splice(followerIndex, 1);
+        _me.following.splice(userIndex, 1);
 
-        await u.save();
-        await _follower.save();
-
-        returnedUser = _follower;
+        await targetUser.save();
+        await _me.save();
+        returnedUser = _me;
 
         break;
 
       case "default":
-        if (u._id.toString() !== user._id)
+        if (targetUser._id.toString() !== user._id)
           return res.status(403).send("Only the Owner can edit this Account.");
 
         if (file) {
           if (
-            u.avatarPath &&
-            u.avatarPath !== process.env.DEFAULT_AVATAR_PATH
+            targetUser.avatarPath &&
+            targetUser.avatarPath !== process.env.DEFAULT_AVATAR_PATH
           ) {
-            await handleFileDelete(u.avatarCloudID);
+            await handleFileDelete(targetUser.avatarCloudID);
           }
 
           const b64 = Buffer.from(file.buffer).toString("base64");
           const dataURI = `data:${file.mimetype};base64,${b64}`;
           const { secure_url: url, public_id: avatarCloudID } =
             await handleFileUpload(dataURI, "users/");
-          u.avatarPath = url;
-          u.avatarCloudID = avatarCloudID;
+          targetUser.avatarPath = url;
+          targetUser.avatarCloudID = avatarCloudID;
         }
 
-        if (body.firstName) u.firstName = body.firstName;
-        if (body.lastName) u.lastName = body.lastName;
-        if (body.username) u.username = body.username;
-        if (body.bio) u.bio = body.bio;
-        if (body.email) u.email = body.email;
-        if (body.passwrod) u.password = body.password;
-        if (!u.avatarPath) u.avatarPath = process.env.DEFAULT_AVATAR_PATH;
+        if (body.firstName) targetUser.firstName = body.firstName;
+        if (body.lastName) targetUser.lastName = body.lastName;
+        if (body.username) targetUser.username = body.username;
+        if (body.bio) targetUser.bio = body.bio;
+        if (body.email) targetUser.email = body.email;
+        if (body.passwrod) targetUser.password = body.password;
+        if (!targetUser.avatarPath)
+          targetUser.avatarPath = process.env.DEFAULT_AVATAR_PATH;
 
-        await u.save();
-        returnedUser = u;
+        await targetUser.save();
+        returnedUser = targetUser;
 
         break;
 

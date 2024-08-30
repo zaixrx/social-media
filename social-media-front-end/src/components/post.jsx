@@ -298,7 +298,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
               className="d-flex flex-column gap-2"
               style={{ overflowX: "auto" }}
             >
-              {comments.map((c) => {
+              {comments.reverse().map((c) => {
                 if (c.parent) return;
 
                 return (

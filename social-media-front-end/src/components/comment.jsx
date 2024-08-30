@@ -144,18 +144,19 @@ function Comment({
     for (let i = 0; i < comment.children?.length; i++) {
       const child = comment.children[i];
       if (!child) continue;
-
-      children.push(
-        <Comment
-          key={child._id}
-          comment={child}
-          isOwner={currentUser._id === child.user}
-          onCommentEdit={onCommentEdit}
-          onCommentDelete={onCommentDelete}
-          onCommentReplyTriggerd={onCommentReplyTriggerd}
-          currentUser={currentUser}
-        />
-      );
+      children
+        .reverse()
+        .push(
+          <Comment
+            key={child._id}
+            comment={child}
+            isOwner={currentUser._id === child.user}
+            onCommentEdit={onCommentEdit}
+            onCommentDelete={onCommentDelete}
+            onCommentReplyTriggerd={onCommentReplyTriggerd}
+            currentUser={currentUser}
+          />
+        );
     }
 
     return children;

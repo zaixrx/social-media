@@ -1,32 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { editUser, getUser } from "../services/user";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  getUser,
+  sendFollowUserRequest,
+  sendUnfollowUserRequest,
+} from "../services/user";
 import Friends from "../components/friendsBar";
 import Post from "../components/post";
 import EditUser from "../components/editUser";
 import EditPost from "../components/editPost";
 import SharePost from "../components/sharePost";
-import { setToken } from "../utils/token";
+import PopUp from "../common/PopUp";
+import { Modal } from "bootstrap";
 
 function Profile({ currentUser }) {
-  const [user, setUser] = useState({});
   const [prevId, setPrevId] = useState("");
-  const [followers, setFollowers] = useState([]);
-  const [following, setFollowing] = useState([]);
+  const [targetUser, setTargetUser] = useState({});
   const { _id } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (prevId === _id) return;
-
     (async () => {
       try {
         const { data: user } = await getUser(_id);
-        setUser(user);
-        setFollowers(user.followers);
-        setFollowing(user.following);
-      } catch (error) {
-        alert(error.message);
+        setTargetUser(user);
+      } catch ({ message, response }) {
+        console.error(
+          `Could not fetch user ${_id}:`,
+          response ? response : message
+        );
       }
     })();
 
@@ -45,43 +48,101 @@ function Profile({ currentUser }) {
     asyncFunctionRefrence(post).catch((err) => console.log(err.message));
   }
 
-  async function handleFollow() {
+  async function handleFollow(targetUser) {
+    if (!targetUser) return;
+    const { _id, followers } = targetUser;
     try {
-      const { data: token } = await editUser(user._id, null, "follow");
-      setToken(token);
-      const _followers = [...followers];
-      _followers.push(currentUser._id);
-      setFollowers(_followers);
+      await sendFollowUserRequest(_id);
+      followers.push(currentUser._id);
+      currentUser.following.push(_id);
     } catch (error) {
       console.log(error.response ? error.response.data : error.message);
     }
+    return targetUser;
   }
 
-  async function handleUnfollow() {
+  async function handleUnfollow(targetUser) {
+    if (!targetUser) return;
+    const { _id, followers } = targetUser;
     try {
-      const { data: token } = await editUser(user._id, null, "unfollow");
-      setToken(token);
-      const _followers = [...followers];
-      const index = followers.indexOf(currentUser._id);
-      _followers.splice(index, 1);
-      setFollowers(_followers);
+      await sendUnfollowUserRequest(_id);
+      _.pull(followers, currentUser._id);
+      _.pull(currentUser.following, _id);
     } catch (error) {
       console.log(error.response ? error.response.data : error.message);
     }
+    return targetUser;
   }
 
-  const isOwner = user._id === currentUser._id;
-  const usersExist = user._id && currentUser._id;
+  const [usersList, setUsersList] = useState([]);
+
+  async function showUsersList(usersID) {
+    new Modal("#usersList").show();
+    let users = [];
+    for (let i = 0; i < usersID.length; i++) {
+      const userID = usersID[i];
+      const { data: user } = await getUser(userID);
+      users.push(user);
+    }
+    setUsersList(users);
+  }
+
+  const isOwner = targetUser._id === currentUser._id;
+  const usersExist = targetUser._id && currentUser._id;
 
   return (
     usersExist && (
       <>
         {isOwner && (
           <>
-            <EditUser user={user} />
-            <EditPost getDataReference={getDataReference} user={user} />
+            <EditUser user={targetUser} />
+            <EditPost getDataReference={getDataReference} user={targetUser} />
           </>
         )}
+        <PopUp modalId="usersList" headerLabel="Users" showSubmitButton={false}>
+          <div className="d-flex flex-column gap-2">
+            {usersList.map((targetUser) => (
+              <div
+                key={targetUser._id}
+                className="d-flex justify-content-between"
+              >
+                <Link
+                  to={`/profile/${targetUser._id}`}
+                  className="d-flex align-items-center gap-2 text-black"
+                >
+                  <img
+                    src={targetUser.avatarPath}
+                    className="avatar rounded-circle"
+                    height={40}
+                    width={40}
+                  />
+                  <span className="fs-5">@{targetUser.username}</span>
+                </Link>
+                {targetUser._id !== currentUser._id && (
+                  <button
+                    id={targetUser._id}
+                    className="btn btn-outline-primary"
+                    onClick={async () => {
+                      if (currentUser.following.includes(targetUser._id)) {
+                        await sendUnfollowUserRequest(targetUser._id);
+                        document.getElementById(targetUser._id).innerHTML =
+                          "Follow";
+                      } else {
+                        await sendFollowUserRequest(targetUser._id);
+                        document.getElementById(targetUser._id).innerHTML =
+                          "Unfollow";
+                      }
+                    }}
+                  >
+                    {currentUser.following.includes(targetUser._id)
+                      ? "Unfollow"
+                      : "Follow"}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </PopUp>
         <div className="container my-3">
           <div className="row g-4">
             <div className="col-lg-8 vstack gap-3">
@@ -101,7 +162,7 @@ function Profile({ currentUser }) {
                     data-bs-target={isOwner && "#editUserModal"}
                   >
                     <img
-                      src={user.avatarPath}
+                      src={targetUser.avatarPath}
                       height={125}
                       width={125}
                       style={{ marginTop: -65 }}
@@ -109,15 +170,22 @@ function Profile({ currentUser }) {
                     />
                   </div>
                   <div className="my-3">
-                    <h3 className="m-0">{`${user.firstName} ${user.lastName}`}</h3>
+                    <h3 className="m-0">{`${targetUser.firstName} ${targetUser.lastName}`}</h3>
                     <div className="d-flex fs-5 my-1">
-                      <span className="fw-bold">@{user.username}</span>
-                      <p className="mb-0 dot">{user.role}</p>
+                      <span className="fw-bold">@{targetUser.username}</span>
+                      <p className="mb-0 dot">{targetUser.role}</p>
                     </div>
-                    <span className="my-1">{user.bio}</span>
+                    <span className="my-1">{targetUser.bio}</span>
                     <div className="d-flex fs-6 text-secondary">
-                      <span>Followers: {followers.length}</span>
-                      <span className="dot">Following: {following.length}</span>
+                      <span onClick={() => showUsersList(targetUser.followers)}>
+                        Followers: {targetUser.followers.length}
+                      </span>
+                      <span
+                        onClick={() => showUsersList(targetUser.following)}
+                        className="dot"
+                      >
+                        Following: {targetUser.following.length}
+                      </span>
                     </div>
                   </div>
                   <div className="d-flex gap-2">
@@ -134,21 +202,31 @@ function Profile({ currentUser }) {
                       <>
                         <button
                           className="btn btn-outline-primary"
-                          onClick={() => navigate(`/chat/${user._id}`)}
+                          onClick={() => navigate(`/chat/${targetUser._id}`)}
                         >
                           Message
                         </button>
-                        {followers.includes(currentUser._id) ? (
+                        {targetUser.followers.includes(currentUser._id) ? (
                           <button
                             className="btn btn-outline-primary"
-                            onClick={handleUnfollow}
+                            onClick={async () => {
+                              const user = await handleUnfollow({
+                                ...targetUser,
+                              });
+                              setTargetUser(user);
+                            }}
                           >
                             Unfollow
                           </button>
                         ) : (
                           <button
                             className="btn btn-outline-primary"
-                            onClick={handleFollow}
+                            onClick={async () => {
+                              const user = await handleFollow({
+                                ...targetUser,
+                              });
+                              setTargetUser(user);
+                            }}
                           >
                             Follow
                           </button>
@@ -158,20 +236,20 @@ function Profile({ currentUser }) {
                   </div>
                 </div>
               </div>
-              {isOwner && <SharePost user={user} />}
-              {user.posts.length === 0 ? (
+              {isOwner && <SharePost user={targetUser} />}
+              {targetUser.posts.length === 0 ? (
                 <div className="card px-4 py-4">
                   <span className="fs-3">
-                    {user.firstName} Has No Posts &#128554;
+                    {targetUser.firstName} Has No Posts &#128554;
                   </span>
                 </div>
               ) : (
-                user.posts.map((post) => {
+                targetUser.posts.map((post) => {
                   return (
                     <Post
                       onPostEdit={handlePostEdit}
                       currentUser={currentUser}
-                      user={user}
+                      user={targetUser}
                       post={post}
                       key={post._id}
                     />

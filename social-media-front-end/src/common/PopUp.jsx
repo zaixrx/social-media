@@ -1,6 +1,13 @@
 import React from "react";
 
-function PopUp({ modalId, headerLabel, children, footer, onSubmit }) {
+function PopUp({
+  modalId,
+  headerLabel,
+  children,
+  footer,
+  onSubmit,
+  showSubmitButton = true,
+}) {
   return (
     modalId && (
       <div className="modal fade" id={modalId}>
@@ -18,9 +25,11 @@ function PopUp({ modalId, headerLabel, children, footer, onSubmit }) {
             <div className="modal-body">{children}</div>
             <div className="modal-footer d-flex justify-content-between">
               {footer}
-              <button className="btn btn-primary" onClick={onSubmit}>
-                Submit
-              </button>
+              {showSubmitButton && (
+                <button className="btn btn-primary" onClick={onSubmit}>
+                  Submit
+                </button>
+              )}
             </div>
           </div>
         </div>
