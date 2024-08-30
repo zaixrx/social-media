@@ -6,7 +6,7 @@ function PopUp({
   children,
   footer,
   onSubmit,
-  showSubmitButton = true,
+  showFooter = true,
 }) {
   return (
     modalId && (
@@ -23,14 +23,14 @@ function PopUp({
               />
             </div>
             <div className="modal-body">{children}</div>
-            <div className="modal-footer d-flex justify-content-between">
-              {footer}
-              {showSubmitButton && (
+            {showFooter && (
+              <div className="modal-footer d-flex justify-content-between">
+                {footer}
                 <button className="btn btn-primary" onClick={onSubmit}>
                   Submit
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

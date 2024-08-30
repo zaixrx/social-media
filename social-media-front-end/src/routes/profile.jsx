@@ -99,7 +99,7 @@ function Profile({ currentUser }) {
             <EditPost getDataReference={getDataReference} user={targetUser} />
           </>
         )}
-        <PopUp modalId="usersList" headerLabel="Users" showSubmitButton={false}>
+        <PopUp modalId="usersList" headerLabel="Users" showFooter={false}>
           <div className="d-flex flex-column gap-2">
             {usersList.map((targetUser) => (
               <div
