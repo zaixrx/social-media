@@ -37,6 +37,9 @@ const messageSchema = new mongoose.Schema({
         type: String,
         require: true,
       },
+      cloudID: {
+        type: String,
+      },
     },
   ],
 });

@@ -64,7 +64,7 @@ function Comment({
 
   return (
     comment && (
-      <div className="d-flex flex-column gap-2">
+      <div>
         <div className="d-flex">
           <Link to={userProfileURL}>
             <img
@@ -130,7 +130,9 @@ function Comment({
           </div>
         </div>
         {getChildComments()?.length ? (
-          <div className="ms-5">{getChildComments()}</div>
+          <div className="d-flex flex-column gap-2 mt-2 ms-5">
+            {getChildComments()}
+          </div>
         ) : null}
       </div>
     )

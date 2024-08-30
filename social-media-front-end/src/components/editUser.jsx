@@ -49,7 +49,7 @@ function EditUser({ user }) {
     let formData = new FormData();
     formData.append("firstName", firstName);
     formData.append("lastName", lastName);
-    formData.append("bio", bio);
+    formData.append("bio", bio || "");
     formData.append("avatar", avatar);
 
     try {

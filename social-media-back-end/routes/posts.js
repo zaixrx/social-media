@@ -1,10 +1,5 @@
 const _ = require("lodash");
 const router = require("express").Router();
-const {
-  deleteFile,
-  generatePath,
-  getNameFromPath,
-} = require("../utils/file.js");
 const auth = require("../middleware/auth.js");
 const upload = require("../middleware/upload.js");
 const asyncMiddleware = require("../middleware/async.js");
@@ -17,6 +12,7 @@ const {
   deleteCommentChildren,
 } = require("../models/comment.js");
 const { User } = require("../models/user.js");
+const { handleFileUpload, handleFileDelete } = require("../utils/cloud.js");
 
 router.get(
   "/",
@@ -41,23 +37,29 @@ router.post(
       caption: body.caption,
       publishDate: new Date(),
     });
-    if (file) post.imagePath = generatePath(file.path);
 
     // I might implement a transaction for this later (You won't)
     // But for now this will work
     const dbUser = await User.findById(user._id);
+    if (!dbUser) return res.status(404).send("User doesn't exist");
 
     try {
+      if (file) {
+        const b64 = Buffer.from(file.buffer).toString("base64");
+        const dataURI = `data:${file.mimetype};base64,${b64}`;
+        const { secure_url: url, public_id: imageCloudID } =
+          await handleFileUpload(dataURI, `posts/${post._id}`);
+        post.imagePath = url;
+        post.imageCloudID = imageCloudID;
+      }
+
       await post.save();
       dbUser.posts.push(post);
       await dbUser.save();
+
       res.send(post);
-    } catch (internalException) {
-      await Post.findByIdAndDelete(post._id);
-      if (dbUser.posts.includes(post)) {
-        dbUser.posts.slice(dbUser.posts.indexOf(post));
-        await dbUser.save();
-      }
+    } catch ({ message, response }) {
+      res.status(400).send(response ? response : message);
     }
   })
 );
@@ -149,16 +151,20 @@ router.put(
           return res.status(400).send("Only the Owner can edit this Post.");
         if (!validatePost(body, res)) return;
 
-        const newImagePath = file && generatePath(file.path);
-        // If there is no image don't delete anything
-        // If there is an image and its not the same as the last one delete the last one.
-        const imageChanged = post.imagePath && post.imagePath !== newImagePath;
-        if (imageChanged) {
-          deleteFile(getNameFromPath(post.imagePath), console.error);
+        // TODO: Fix this please
+
+        if (post.imageCloudID) {
+          await handleFileDelete(post.imageCloudID);
+
+          const b64 = Buffer.from(file.buffer).toString("base64");
+          const dataURI = `data:${file.mimetype};base64,${b64}`;
+          const { secure_url: url, public_id: imageCloudID } =
+            await handleFileUpload(dataURI, `posts/${post._id}`);
+          post.imagePath = url;
+          post.imageCloudID = imageCloudID;
         }
 
         post.caption = body.caption;
-        post.imagePath = file && newImagePath;
 
         res.send(post);
         break;
@@ -254,11 +260,7 @@ router.delete(
         await post.deleteOne();
         _.pull(postUser.posts, post._id);
         await postUser.save();
-        if (post.imagePath) {
-          deleteFile(getNameFromPath(post.imagePath), (message) =>
-            error(res, 500, message)
-          );
-        }
+        if (post.imagePath) await handleFileDelete(post.imageCloudID);
         break;
 
       default:

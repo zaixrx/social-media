@@ -294,7 +294,10 @@ function Post({ currentUser, user, post, onPostEdit }) {
             {currentCommentParent.username && (
               <p>Currently replying to {currentCommentParent.username}</p>
             )}
-            <div style={{ overflowX: "auto" }}>
+            <div
+              className="d-flex flex-column gap-2"
+              style={{ overflowX: "auto" }}
+            >
               {comments.map((c) => {
                 if (c.parent) return;
 

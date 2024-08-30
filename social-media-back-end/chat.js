@@ -1,7 +1,8 @@
 const { getRoomByMembers, getRoom, Room } = require("./models/room.js");
-const { createFile, deleteFile } = require("./utils/file.js");
+const { handleFileUpload, handleFileDelete } = require("./utils/cloud.js");
 
 const emojis = ["", "👍", "❤", "😂", "😡"];
+const availabeFileTypes = ["image", "video"];
 
 module.exports = function (server) {
   const io = require("socket.io")(server, {
@@ -134,6 +135,18 @@ module.exports = function (server) {
         if (messageFiles?.length) {
           for (let i = 0; i < messageFiles.length; i++) {
             const file = messageFiles[i];
+            if (!availabeFileTypes.includes(file.type.split("/")[0]))
+              return error(`Could not save file of type ${file.type}`);
+            const b64 = Buffer.from(file.data).toString("base64");
+            const dataURI = `data:${file.type};base64,${b64}`;
+            const { secure_url: url, public_id: fileCloudID } =
+              await handleFileUpload(dataURI, `chat/${room._id}`);
+            message.files.push({
+              path: url,
+              type: file.type,
+              cloudID: fileCloudID,
+            });
+            /*
             const fileName = `${message._id}_${i}.${file.extension}`;
 
             const directoryCreatedSuccessfully = createFile(
@@ -150,6 +163,7 @@ module.exports = function (server) {
               path: `${process.env.PROTOCOL}://${process.env.HOST_NAME}/chat/${room_id}/${fileName}`,
               type: file.type,
             });
+*/
           }
         }
 
@@ -191,14 +205,12 @@ module.exports = function (server) {
         return error("Only the owner can delete this Message.");
 
       if (message.files.length) {
-        message.files.forEach((file) => {
-          const path = file.path.replace(
-            `http://${process.env.HOST_NAME}`,
-            "./public"
+        for (let i = 0; i < message.files.length; i++) {
+          await handleFileDelete(
+            message.files[i].cloudID,
+            message.files[i].type.split("/")[0] // eg: "video" or "image"
           );
-
-          deleteFile(path, error);
-        });
+        }
       }
 
       const index = room.messages.indexOf(message);

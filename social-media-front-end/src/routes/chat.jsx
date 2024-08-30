@@ -366,6 +366,7 @@ function SendInput({
             onFilesChange(files);
           }}
           multiple
+          accept="image/*, video/*"
         />
       </div>
       <button className="btn btn-primary border-end-0" onClick={onSendAsync}>

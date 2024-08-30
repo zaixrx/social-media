@@ -1,16 +1,12 @@
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const {
-  deleteFile,
-  generatePath,
-  getNameFromPath,
-} = require("../utils/file.js");
 const auth = require("../middleware/auth.js");
 const upload = require("../middleware/upload.js");
 const validateObjectId = require("../middleware/validateObjectId.js");
 const asyncMiddleware = require("../middleware/async.js");
 const { User, userJoiSchema, put_userJoiSchema } = require("../models/user.js");
+const { handleFileUpload, handleFileDelete } = require("../utils/cloud.js");
 
 router.get(
   "/",
@@ -206,12 +202,22 @@ router.put(
         if (u._id.toString() !== user._id)
           return res.status(403).send("Only the Owner can edit this Account.");
 
-        const newAvatarPath = file && generatePath(file.path);
-        const avatarChanged = file && u.avatarPath !== newAvatarPath;
-        if (u.avatarPath !== process.env.DEFAULT_AVATAR_PATH && avatarChanged)
-          deleteFile(getNameFromPath(u.avatarPath), console.error);
+        if (file) {
+          if (
+            u.avatarPath &&
+            u.avatarPath !== process.env.DEFAULT_AVATAR_PATH
+          ) {
+            await handleFileDelete(u.avatarCloudID);
+          }
 
-        if (file) u.avatarPath = newAvatarPath;
+          const b64 = Buffer.from(file.buffer).toString("base64");
+          const dataURI = `data:${file.mimetype};base64,${b64}`;
+          const { secure_url: url, public_id: avatarCloudID } =
+            await handleFileUpload(dataURI, "users/");
+          u.avatarPath = url;
+          u.avatarCloudID = avatarCloudID;
+        }
+
         if (body.firstName) u.firstName = body.firstName;
         if (body.lastName) u.lastName = body.lastName;
         if (body.username) u.username = body.username;

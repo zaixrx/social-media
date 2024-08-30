@@ -1,3 +1,5 @@
 // TODO: fix "ValidationError: Room validation failed: members.0.user: Path `user` is required., members.1.user: Path `user` is required." => Not Done
 // TODO: add the ability to reconnect when disconnected (websockets) => Not Done
-// TODO: Edit new comment replies
+// TODO: Edit new comment replies => Done
+// TODO: Fix bio undefined => Done
+// TODO: Fix the files selector on chat

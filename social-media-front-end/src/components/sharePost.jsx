@@ -23,8 +23,8 @@ function SharePost({ user, onNewPost }) {
     try {
       await publishPost(formData, token);
       onNewPost();
-    } catch (error) {
-      showMessage(error.response.data);
+    } catch ({ response, message }) {
+      showMessage(response ? response.data : message);
     }
   }
 

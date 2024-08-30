@@ -19,6 +19,7 @@ const postSchema = new mongoose.Schema({
   caption: String,
   publishDate: Date,
   imagePath: String,
+  imageCloudID: String,
   likes: [likeSchema],
   comments: [commentSchema],
 });

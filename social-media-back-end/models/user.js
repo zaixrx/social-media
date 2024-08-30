@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema({
     ref: "Post",
   },
   avatarPath: String,
+  avatarCloudID: String,
   followers: {
     type: [mongoose.Schema.Types.ObjectId],
     ref: "User",
@@ -46,7 +47,10 @@ const userSchema = new mongoose.Schema({
     required: true,
     default: "Member",
   },
-  bio: String,
+  bio: {
+    type: String,
+    default: "",
+  },
 });
 
 userSchema.methods.generateAuthToken = async function () {
