@@ -2,4 +2,6 @@
 // TODO: add the ability to reconnect when disconnected (websockets) => Not Done
 // TODO: Edit new comment replies => Done
 // TODO: Fix bio undefined => Done
+// TODO: real time reply => Done(I guess)
+// TODO: post edit => Done
 // TODO: Fix the files selector on chat

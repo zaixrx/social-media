@@ -151,11 +151,10 @@ router.put(
           return res.status(400).send("Only the Owner can edit this Post.");
         if (!validatePost(body, res)) return;
 
-        // TODO: Fix this please
-
-        if (post.imageCloudID) {
-          await handleFileDelete(post.imageCloudID);
-
+        if (file) {
+          if (post.imageCloudID) {
+            await handleFileDelete(post.imageCloudID);
+          }
           const b64 = Buffer.from(file.buffer).toString("base64");
           const dataURI = `data:${file.mimetype};base64,${b64}`;
           const { secure_url: url, public_id: imageCloudID } =
