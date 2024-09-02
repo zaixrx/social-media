@@ -29,6 +29,8 @@ import {
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 
+import awakeServer from "./utils/awakeServer";
+
 library.add(
   regularHeart,
   solidHeart,
