@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === "production") {
       .catch(({ message, response }) =>
         console.error(response ? response : message)
       );
-  }, 1000);
+  }, 1000 * 60 * 14);
 }
 
 const server = app.listen(port, () => {

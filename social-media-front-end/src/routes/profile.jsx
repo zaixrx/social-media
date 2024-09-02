@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   getUser,
@@ -12,12 +12,18 @@ import EditPost from "../components/editPost";
 import SharePost from "../components/sharePost";
 import PopUp from "../common/PopUp";
 import { Modal } from "bootstrap";
+import Paragpragh from "../common/Paragraph";
+import { showMessage } from "../utils/logging";
 
 function Profile({ currentUser }) {
   const [prevId, setPrevId] = useState("");
   const [targetUser, setTargetUser] = useState({});
+  const [usersList, setUsersList] = useState([]);
+
   const { _id } = useParams();
   const navigate = useNavigate();
+  const isOwner = targetUser._id === currentUser._id;
+  const usersExist = targetUser._id && currentUser._id;
 
   useEffect(() => {
     if (prevId === _id) return;
@@ -48,33 +54,39 @@ function Profile({ currentUser }) {
     asyncFunctionRefrence(post).catch((err) => console.log(err.message));
   }
 
-  async function handleFollow(targetUser) {
-    if (!targetUser) return;
-    const { _id, followers } = targetUser;
+  const [followLoading, setFollowLoading] = useState(false);
+
+  async function handleFollow() {
+    if (followLoading) return;
+
+    const _targetUser = { ...targetUser };
     try {
+      setFollowLoading(true);
       await sendFollowUserRequest(_id);
-      followers.push(currentUser._id);
+      _targetUser.followers.push(currentUser._id);
       currentUser.following.push(_id);
-    } catch (error) {
-      console.log(error.response ? error.response.data : error.message);
+      setTargetUser(_targetUser);
+      setFollowLoading(false);
+    } catch ({ response, message }) {
+      showMessage(response ? response.data : message);
     }
-    return targetUser;
   }
 
-  async function handleUnfollow(targetUser) {
-    if (!targetUser) return;
-    const { _id, followers } = targetUser;
+  async function handleUnfollow() {
+    if (followLoading) return;
+
+    const _targetUser = { ...targetUser };
     try {
+      setFollowLoading(true);
       await sendUnfollowUserRequest(_id);
-      _.pull(followers, currentUser._id);
+      _.pull(_targetUser.followers, currentUser._id);
       _.pull(currentUser.following, _id);
+      setTargetUser(_targetUser);
+      setFollowLoading(false);
     } catch (error) {
-      console.log(error.response ? error.response.data : error.message);
+      showMessage(response ? response.data : message);
     }
-    return targetUser;
   }
-
-  const [usersList, setUsersList] = useState([]);
 
   async function showUsersList(usersID) {
     new Modal("#usersList").show();
@@ -86,9 +98,6 @@ function Profile({ currentUser }) {
     }
     setUsersList(users);
   }
-
-  const isOwner = targetUser._id === currentUser._id;
-  const usersExist = targetUser._id && currentUser._id;
 
   return (
     usersExist && (
@@ -118,27 +127,6 @@ function Profile({ currentUser }) {
                   />
                   <span className="fs-5">@{targetUser.username}</span>
                 </Link>
-                {targetUser._id !== currentUser._id && (
-                  <button
-                    id={targetUser._id}
-                    className="btn btn-outline-primary"
-                    onClick={async () => {
-                      if (currentUser.following.includes(targetUser._id)) {
-                        await sendUnfollowUserRequest(targetUser._id);
-                        document.getElementById(targetUser._id).innerHTML =
-                          "Follow";
-                      } else {
-                        await sendFollowUserRequest(targetUser._id);
-                        document.getElementById(targetUser._id).innerHTML =
-                          "Unfollow";
-                      }
-                    }}
-                  >
-                    {currentUser.following.includes(targetUser._id)
-                      ? "Unfollow"
-                      : "Follow"}
-                  </button>
-                )}
               </div>
             ))}
           </div>
@@ -175,8 +163,8 @@ function Profile({ currentUser }) {
                       <span className="fw-bold">@{targetUser.username}</span>
                       <p className="mb-0 dot">{targetUser.role}</p>
                     </div>
-                    <span className="my-1">{targetUser.bio}</span>
-                    <div className="d-flex fs-6 text-secondary">
+                    <Paragpragh className="my-1">{targetUser.bio}</Paragpragh>
+                    <div className="d-flex fs-6 text-secondary clickable">
                       <span onClick={() => showUsersList(targetUser.followers)}>
                         Followers: {targetUser.followers.length}
                       </span>
@@ -210,25 +198,27 @@ function Profile({ currentUser }) {
                           <button
                             className="btn btn-outline-primary"
                             onClick={async () => {
-                              const user = await handleUnfollow({
-                                ...targetUser,
-                              });
-                              setTargetUser(user);
+                              await handleUnfollow();
                             }}
                           >
-                            Unfollow
+                            {followLoading ? (
+                              <span className="spinner-border spinner-border-sm"></span>
+                            ) : (
+                              "Unfollow"
+                            )}
                           </button>
                         ) : (
                           <button
                             className="btn btn-outline-primary"
                             onClick={async () => {
-                              const user = await handleFollow({
-                                ...targetUser,
-                              });
-                              setTargetUser(user);
+                              await handleFollow();
                             }}
                           >
-                            Follow
+                            {followLoading ? (
+                              <span className="spinner-border spinner-border-sm"></span>
+                            ) : (
+                              "Follow"
+                            )}
                           </button>
                         )}
                       </>

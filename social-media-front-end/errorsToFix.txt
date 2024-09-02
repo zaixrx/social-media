@@ -1,2 +1,4 @@
 // TODO: fix "ValidationError: Room validation failed: members.0.user: Path `user` is required., members.1.user: Path `user` is required." => Not Done
 // TODO: add the ability to reconnect when disconnected (websockets) => Not Done
+// TODO: fix the null posts bug
+// TODO: don't send unneeded data about the user

@@ -8,7 +8,7 @@ import { getFileUrl } from "../utils/file";
 import PopUp from "../common/PopUp";
 import TextArea from "../common/Form/TextArea";
 
-function EditPost({ user, getDataReference, onPostEdit }) {
+function EditPost({ user, getDataReference, onPostEdit, setIsLoading }) {
   const fileInputRef = useRef(null);
   const [file, setFile] = useState({});
   const [postID, setPostId] = useState("");
@@ -44,9 +44,13 @@ function EditPost({ user, getDataReference, onPostEdit }) {
     formData.append("image", file);
     formData.append("caption", caption);
 
+    new Modal("#editPostModal").hide();
+
     try {
+      setIsLoading(true);
       await editPost(postID, formData, token);
       onPostEdit();
+      setIsLoading(false);
     } catch (error) {
       showMessage(
         `Failed to Edit Post: ${error.response?.data || error.message}`

@@ -7,7 +7,7 @@ import { getPosts } from "../services/posts.js";
 import EditPost from "../components/editPost.jsx";
 import { showMessage } from "../utils/logging.js";
 
-function Home({ user }) {
+function Home({ user, setIsLoading }) {
   const [posts, setPosts] = useState([]);
 
   /*
@@ -25,15 +25,16 @@ function Home({ user }) {
   // Me-2: 100060675124730007
 
   useEffect(() => {
+    setIsLoading(true);
     (async () => {
       try {
         const { data: _posts } = await getPosts();
         setPosts(_posts);
-      } catch (error) {
-        if (error.response) console.log(error.response.data);
-        alert(error.message);
+      } catch ({ response, message }) {
+        showMessage(response ? response.data : message);
       }
     })();
+    setIsLoading(false);
   }, []);
 
   // Frick react
@@ -59,6 +60,7 @@ function Home({ user }) {
         user={user}
         getDataReference={getDataReference}
         onPostEdit={() => window.location.reload()}
+        setIsLoading={setIsLoading}
       />
       <div className="container my-3">
         <div className="row g-4">
@@ -71,6 +73,7 @@ function Home({ user }) {
               onNewPost={() => {
                 window.location.reload();
               }}
+              setIsLoading={setIsLoading}
             />
             {posts.map((post) => {
               return (

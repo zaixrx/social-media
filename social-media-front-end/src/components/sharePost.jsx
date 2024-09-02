@@ -5,7 +5,7 @@ import { getToken } from "../utils/token.js";
 import { showMessage } from "../utils/logging.js";
 import TextArea from "../common/Form/TextArea.jsx";
 
-function SharePost({ user, onNewPost }) {
+function SharePost({ user, onNewPost, setIsLoading }) {
   const inputImage = useRef();
   const [image, setImage] = useState({});
   const [caption, setCaption] = useState("");
@@ -13,6 +13,7 @@ function SharePost({ user, onNewPost }) {
   async function handleFormSubmit(e) {
     e.preventDefault();
     if (!caption.trim() && !image.name) return;
+    setIsLoading(true);
 
     const token = getToken();
 
@@ -26,6 +27,7 @@ function SharePost({ user, onNewPost }) {
     } catch ({ response, message }) {
       showMessage(response ? response.data : message);
     }
+    setIsLoading(false);
   }
 
   function handleImageChange({ target }) {

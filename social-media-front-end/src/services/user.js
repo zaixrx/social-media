@@ -22,12 +22,10 @@ export function editUser(_id, data, type = "default") {
 
 export function getCurrentUser() {
   const token = getToken();
-  if (!token) return null;
   try {
     return jwtDecode(token);
-  } catch (error) {
-    console.log(`Failed to decode Token`, error);
-  }
+  } catch {}
+  return {};
 }
 
 export function regenerateAuthToken() {

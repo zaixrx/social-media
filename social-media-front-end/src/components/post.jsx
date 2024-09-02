@@ -19,6 +19,7 @@ import { getToken } from "../utils/token";
 import { getDateString } from "../utils/time";
 import { showMessage } from "../utils/logging";
 import Image from "../common/Image";
+import Paragpragh from "../common/Paragraph";
 
 function Post({ currentUser, user, post, onPostEdit }) {
   const [likes, setLikes] = useState({ liked: false, count: "" });
@@ -48,8 +49,8 @@ function Post({ currentUser, user, post, onPostEdit }) {
     try {
       await sendPostDeleteRequest(post._id, getToken());
       window.location.reload();
-    } catch (error) {
-      alert(error.message);
+    } catch ({ message, response }) {
+      showMessage(response ? response.data : message);
     }
   }
 
@@ -60,8 +61,8 @@ function Post({ currentUser, user, post, onPostEdit }) {
     count += liked ? 1 : -1;
 
     try {
-      await sendPostLikeRequest(liked, post._id, getToken());
       setLikes({ liked, count });
+      await sendPostLikeRequest(liked, post._id, getToken());
     } catch ({ response, message }) {
       showMessage(response ? response.data : message);
     }
@@ -238,7 +239,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
         </div>
         <div className="card-body">
           <div className="mb-3">
-            <p className="mb-0">{post.caption}</p>
+            <Paragpragh className="mb-0">{post.caption}</Paragpragh>
             {post.imagePath && (
               <Image src={post.imagePath} className="post-img mt-3" />
             )}
@@ -246,7 +247,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
           <div className="d-flex mb-3 gap-4">
             <div
               onClick={handlePostLike}
-              className="d-flex align-items-center clickable"
+              className="d-flex align-items-center clickable text-danger"
             >
               <FontAwesomeIcon
                 className="card-btn me-2"
@@ -255,7 +256,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
               <p className="mb-0">{likes.count} Like(s)</p>
             </div>
             <div
-              className="d-flex align-items-center clickable"
+              className="d-flex align-items-center clickable text-success"
               onClick={() => commentInput.current.focus()}
             >
               <FontAwesomeIcon
