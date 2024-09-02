@@ -54,8 +54,6 @@ library.add(
 const container = document.getElementById("root");
 const root = createRoot(container);
 
-awakeServer.start();
-
 root.render(
   <BrowserRouter>
     <App />

@@ -53,6 +53,15 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <footer className="d-flex flex-column align-items-center justify-content-center pb-3">
+          <p>
+            Made by <a href="https://github.com/zaixrx">Koua Mohamed Anis</a>
+          </p>
+          <p>
+            Here you can find the
+            <a href="https://github.com/zaixrx/social-media">Source Code</a>
+          </p>
+        </footer>
       </>
     )
   );
