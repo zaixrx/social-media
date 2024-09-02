@@ -29,6 +29,8 @@ import {
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 
+import awakeServer from "./utils/awakeServer";
+
 library.add(
   regularHeart,
   solidHeart,
@@ -51,6 +53,9 @@ library.add(
 
 const container = document.getElementById("root");
 const root = createRoot(container);
+
+awakeServer.start();
+
 root.render(
   <BrowserRouter>
     <App />
