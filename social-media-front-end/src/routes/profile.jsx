@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   getUser,
@@ -15,7 +15,7 @@ import { Modal } from "bootstrap";
 import Paragpragh from "../common/Paragraph";
 import { showMessage } from "../utils/logging";
 
-function Profile({ currentUser }) {
+function Profile({ currentUser, setIsLoading }) {
   const [prevId, setPrevId] = useState("");
   const [targetUser, setTargetUser] = useState({});
   const [usersList, setUsersList] = useState([]);
@@ -27,6 +27,7 @@ function Profile({ currentUser }) {
 
   useEffect(() => {
     if (prevId === _id) return;
+    setIsLoading(true);
     (async () => {
       try {
         const { data: user } = await getUser(_id);
@@ -40,6 +41,7 @@ function Profile({ currentUser }) {
     })();
 
     setPrevId(_id);
+    setIsLoading(false);
   }, [_id]);
 
   let [asyncFunctionRefrence, setAsyncFunctionReference] = useState(
