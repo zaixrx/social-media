@@ -3,6 +3,7 @@ const auth = require("./routes/auth.js");
 const posts = require("./routes/posts.js");
 
 module.exports = function (app) {
+  app.use("/api", (req, res) => res.send("ok"));
   app.use("/api/users", users);
   app.use("/api/auth", auth);
   app.use("/api/posts", posts);
