@@ -12,7 +12,7 @@ import Message from "../components/message";
 import { getFileUrl } from "../utils/file";
 import { showMessage } from "../utils/logging";
 
-function Chat({ user }) {
+function Chat({ user, setIsLoading }) {
   const [messages, setMessages] = useState([]);
   const [contactedMember, setContactedMember] = useState({});
   const [reply, setReply] = useState();
@@ -23,6 +23,7 @@ function Chat({ user }) {
   const fileInput = useRef();
 
   useEffect(() => {
+    setIsLoading(true);
     start(
       user._id,
       _id,
@@ -55,6 +56,7 @@ function Chat({ user }) {
     });
     setContactedMember(contactedMember);
     setMessages(room.messages);
+    setIsLoading(false);
   }
 
   function handleMessageReceive(message) {

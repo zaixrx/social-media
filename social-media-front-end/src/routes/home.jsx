@@ -14,7 +14,7 @@ function Home({ user, setIsLoading }) {
    * 74 - جامعة العلوم والتكنولوجيا هواري. بومدين(الجزائر)
    * 87 - المدرسة الوطنية العليا للإعلام الآلي بالجزائر(الجزائر)
    * 88 - المدرسة العليا للإعلام الآلي سيدي بلعباس
-   * 89 - المدرسة العليا في علوم وتكنولوجيات الإعلام الآلي والرقمنة بجاية => ESTIN
+   * 89 - المدرسة العليا في علوم وتكنولوجيات الإعلام الآلي والرقمنة بجاية
    * 90 -  المدرسة الوطنية العليا للذكاء الاصطناعي الجزائر
    * 93 - المدرسة الوطنية العليا للأمن السيبراني الجزائر
    */
@@ -26,15 +26,14 @@ function Home({ user, setIsLoading }) {
 
   useEffect(() => {
     setIsLoading(true);
-    (async () => {
-      try {
-        const { data: _posts } = await getPosts();
+    try {
+      getPosts().then(({ data: _posts }) => {
         setPosts(_posts);
-      } catch ({ response, message }) {
-        showMessage(response ? response.data : message);
-      }
-    })();
-    setIsLoading(false);
+        setIsLoading(false);
+      });
+    } catch ({ response, message }) {
+      showMessage(response ? response.data : message);
+    }
   }, []);
 
   // Frick react

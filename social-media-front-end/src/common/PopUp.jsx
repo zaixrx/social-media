@@ -17,9 +17,8 @@ function PopUp({
               <h1 className="modal-title fs-5">{headerLabel}</h1>
               <button
                 type="button"
-                className="btn-close shadow-none"
+                className="btn-close"
                 data-bs-dismiss="modal"
-                aria-label="Close"
               />
             </div>
             <div className="modal-body">{children}</div>

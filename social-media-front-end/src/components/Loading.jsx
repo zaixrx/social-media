@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-function Loading({ visible }) {
+function Loading({ isVisible }) {
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -23,15 +23,17 @@ function Loading({ visible }) {
   }, []);
 
   return (
-    <div className="bg-white fill d-flex flex-column align-items-center justify-content-center gap-3">
-      <div
-        className="spinner-grow text-primary"
-        style={{ width: "3rem", height: "3rem" }}
-      />
-      <span className="text-primary text-center" style={{ maxWidth: 300 }}>
-        {status}
-      </span>
-    </div>
+    isVisible && (
+      <div className="page-loader bg-white d-flex flex-column align-items-center justify-content-center gap-3">
+        <div
+          className="spinner-grow text-primary"
+          style={{ width: "3rem", height: "3rem" }}
+        />
+        <span className="text-primary text-center" style={{ maxWidth: 300 }}>
+          {status}
+        </span>
+      </div>
+    )
   );
 }
 

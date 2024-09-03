@@ -15,6 +15,7 @@ import { Modal } from "bootstrap";
 import Paragpragh from "../common/Paragraph";
 import { showMessage } from "../utils/logging";
 
+let usersModal = null;
 function Profile({ currentUser, setIsLoading }) {
   const [prevId, setPrevId] = useState("");
   const [targetUser, setTargetUser] = useState({});
@@ -26,12 +27,15 @@ function Profile({ currentUser, setIsLoading }) {
   const usersExist = targetUser._id && currentUser._id;
 
   useEffect(() => {
-    if (prevId === _id) return;
     setIsLoading(true);
+    if (prevId === _id) return;
+    setPrevId(_id);
+
     (async () => {
       try {
         const { data: user } = await getUser(_id);
         setTargetUser(user);
+        setIsLoading(false);
       } catch ({ message, response }) {
         console.error(
           `Could not fetch user ${_id}:`,
@@ -39,9 +43,6 @@ function Profile({ currentUser, setIsLoading }) {
         );
       }
     })();
-
-    setPrevId(_id);
-    setIsLoading(false);
   }, [_id]);
 
   let [asyncFunctionRefrence, setAsyncFunctionReference] = useState(
@@ -91,7 +92,6 @@ function Profile({ currentUser, setIsLoading }) {
   }
 
   async function showUsersList(usersID) {
-    new Modal("#usersList").show();
     let users = [];
     for (let i = 0; i < usersID.length; i++) {
       const userID = usersID[i];
@@ -99,6 +99,8 @@ function Profile({ currentUser, setIsLoading }) {
       users.push(user);
     }
     setUsersList(users);
+    usersModal = new Modal("#usersListModal");
+    usersModal.show();
   }
 
   return (
@@ -110,7 +112,7 @@ function Profile({ currentUser, setIsLoading }) {
             <EditPost getDataReference={getDataReference} user={targetUser} />
           </>
         )}
-        <PopUp modalId="usersList" headerLabel="Users" showFooter={false}>
+        <PopUp modalId="usersListModal" headerLabel="Users" showFooter={false}>
           <div className="d-flex flex-column gap-2">
             {usersList.map((targetUser) => (
               <div
@@ -118,6 +120,9 @@ function Profile({ currentUser, setIsLoading }) {
                 className="d-flex justify-content-between"
               >
                 <Link
+                  onClick={() => {
+                    usersModal.hide();
+                  }}
                   to={`/profile/${targetUser._id}`}
                   className="d-flex align-items-center gap-2 text-black"
                 >
@@ -236,7 +241,7 @@ function Profile({ currentUser, setIsLoading }) {
                   </span>
                 </div>
               ) : (
-                targetUser.posts.map((post) => {
+                targetUser.posts.reverse().map((post) => {
                   return (
                     <Post
                       onPostEdit={handlePostEdit}
