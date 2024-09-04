@@ -26,7 +26,7 @@ function FormInput({
   }
 
   return (
-    <div className="form-floating mb-2">
+    <div className="form-floating w-100">
       <input
         name={name}
         value={value}

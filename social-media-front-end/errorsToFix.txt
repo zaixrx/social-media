@@ -1,4 +1,7 @@
-// TODO: fix "ValidationError: Room validation failed: members.0.user: Path `user` is required., members.1.user: Path `user` is required." => Not Done
-// TODO: add the ability to reconnect when disconnected (websockets) => Not Done
-// TODO: fix the null posts bug
-// TODO: don't send unneeded data about the user
+// TODO: fix the null posts bug => Done
+// TODO: don't send unneeded data about the user => Done + refactoring + protecting user information
+// TODO: fix last submit step signup => Done
+// TODO: fix cors by not allowing everyone to use my api  => Done
+// TODO: fix the bug of delete then reply => Done
+// TODO: add polls => Done
+// TODO: add the ability to send videos through posts => maybe no

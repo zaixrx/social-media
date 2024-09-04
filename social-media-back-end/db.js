@@ -1,6 +1,4 @@
 const mongoose = require("mongoose");
-const Joi = require("joi");
-Joi.objectId = require("joi-objectid")(Joi);
 
 module.exports = function () {
   mongoose
@@ -9,6 +7,6 @@ module.exports = function () {
       console.log("Connected to the database...");
     })
     .catch((error) => {
-      throw new Error("Couldn't connect to the database.");
+      throw new Error(`Couldn't connect to the database: ${error.message}`);
     });
 };

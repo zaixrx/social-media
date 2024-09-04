@@ -27,6 +27,7 @@ import {
   faReply,
   faXmark,
   faPlus,
+  faSquarePollVertical,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -46,7 +47,8 @@ library.add(
   faReply,
   faVideo,
   faXmark,
-  faPlus
+  faPlus,
+  faSquarePollVertical
 );
 
 const container = document.getElementById("root");

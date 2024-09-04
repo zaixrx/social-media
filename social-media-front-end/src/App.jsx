@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { getCurrentUser } from "./services/user";
+import { getCurrentUser, regenerateAuthToken } from "./services/user";
 import Home from "./routes/home";
 import NavBar from "./components/navbar";
 import NotFound from "./routes/notfound";
@@ -10,6 +10,7 @@ import SignInForm from "./routes/signinForm";
 import SignUpForm from "./routes/signUpForm";
 import Chat from "./routes/chat";
 import Loading from "./components/Loading";
+import { setToken } from "./utils/token";
 
 function App() {
   const [user, setUser] = useState({});
@@ -17,9 +18,12 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setUser(getCurrentUser());
-    setIsUserDataLoaded(true);
-    setIsLoading(false);
+    (async () => {
+      setToken(await regenerateAuthToken());
+      setUser(getCurrentUser());
+      setIsUserDataLoaded(true);
+      setIsLoading(false);
+    })();
   }, []);
 
   function isLoadingSetter(value) {

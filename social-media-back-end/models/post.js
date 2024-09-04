@@ -7,7 +7,16 @@ const postJoiSchema = Joi.object({
   image: Joi.any(),
   caption: Joi.string().allow(""),
   publishDate: Joi.date(),
+  pollOptions: Joi.array().items(Joi.string()),
   like: Joi.boolean(),
+});
+
+const pollOptionSchema = new mongoose.Schema({
+  label: {
+    type: String,
+    required: true,
+  },
+  votes: [mongoose.Schema.ObjectId],
 });
 
 const postSchema = new mongoose.Schema({
@@ -22,6 +31,7 @@ const postSchema = new mongoose.Schema({
   imageCloudID: String,
   likes: [likeSchema],
   comments: [commentSchema],
+  pollOptions: [pollOptionSchema],
 });
 
 const Post = mongoose.model("Post", postSchema);

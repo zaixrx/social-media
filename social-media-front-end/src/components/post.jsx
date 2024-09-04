@@ -7,6 +7,7 @@ import {
   sendPostCommentRequest,
   sendCommentEditRequest,
   sendCommentDeleteRequest,
+  sendPollVoteRequest,
 } from "../services/posts";
 import {
   getComment,
@@ -14,21 +15,39 @@ import {
   deleteCommentChildren,
   prepareComments,
 } from "../utils/comments";
-import Comment from "./comment";
 import { getToken } from "../utils/token";
 import { getDateString } from "../utils/time";
 import { showMessage } from "../utils/logging";
+import { PollOption, getTotalPollVotes } from "./pollManager";
+import Comment from "./comment";
 import Image from "../common/Image";
 import Paragpragh from "../common/Paragraph";
 
 function Post({ currentUser, user, post, onPostEdit }) {
   const [likes, setLikes] = useState({ liked: false, count: "" });
   const [comments, setComments] = useState([]);
+  const [pollOptions, setPollOptions] = useState([]);
   const [currentCommentParent, setCurrentCommentParent] = useState({});
   const commentInput = useRef(undefined);
 
   useEffect(() => {
-    const { comments: _comments, likes } = post;
+    const { comments: _comments, likes, pollOptions: _pollOptions } = post;
+
+    if (_pollOptions.length) {
+      const totalVotes = getTotalPollVotes(_pollOptions);
+
+      setPollOptions(
+        _pollOptions.map((po) => {
+          return {
+            _id: po._id,
+            checked: po.votes.includes(user._id),
+            label: po.label,
+            votes: po.votes,
+            percentage: (po.votes.length * 100) / totalVotes,
+          };
+        })
+      );
+    }
 
     prepareComments(_comments);
 
@@ -163,6 +182,8 @@ function Post({ currentUser, user, post, onPostEdit }) {
       deleteCommentChildren(_comments, commentToDelete);
 
     setComments(_comments);
+
+    if (currentCommentParent._id === _id) setCurrentCommentParent({});
   }
 
   function handleCommentReplyTriggerd(parentCommentID, parentUsername) {
@@ -179,10 +200,39 @@ function Post({ currentUser, user, post, onPostEdit }) {
     });
   }
 
+  async function handlePollOptionVoteSend(pollOptionID, pollOptionVoteValue) {
+    const token = getToken();
+    if (!token || !pollOptionID) return;
+
+    try {
+      const { data: votes } = await sendPollVoteRequest(
+        post._id,
+        pollOptionID,
+        pollOptionVoteValue,
+        token
+      );
+
+      const _pollOptions = [...pollOptions];
+
+      const pollOption = _pollOptions.find((po) => po._id === pollOptionID);
+      pollOption.checked = pollOptionVoteValue;
+      pollOption.votes = votes;
+
+      const totalVotes = getTotalPollVotes(_pollOptions);
+      _pollOptions.forEach((po) => {
+        po.percentage = totalVotes ? (po.votes.length * 100) / totalVotes : 0;
+      });
+
+      setPollOptions(_pollOptions);
+    } catch ({ response, message }) {
+      showMessage(response ? response.data : message);
+    }
+  }
+
   return (
     user && (
       <div className="card">
-        <div className="card-header bg-white d-flex align-items-center justify-content-between">
+        <section className="card-header bg-white d-flex align-items-center justify-content-between">
           <Link
             to={`/profile/${user._id}`}
             className="d-flex align-items-center text-body"
@@ -236,14 +286,28 @@ function Post({ currentUser, user, post, onPostEdit }) {
               </ul>
             </div>
           )}
-        </div>
-        <div className="card-body">
-          <div className="mb-3">
-            <Paragpragh className="mb-0">{post.caption}</Paragpragh>
-            {post.imagePath && (
-              <Image src={post.imagePath} className="post-img mt-3" />
-            )}
-          </div>
+        </section>
+        <section className="card-body d-flex flex-column gap-3">
+          <Paragpragh className="mb-0">{post.caption}</Paragpragh>
+          {post.imagePath && (
+            <Image src={post.imagePath} className="post-img" />
+          )}
+          {post.pollOptions.length
+            ? pollOptions.map((option, index) => (
+                <PollOption
+                  percentage={option.percentage}
+                  checked={option.checked}
+                  id={option._id}
+                  key={option._id}
+                  postID={post._id}
+                  label={option.label}
+                  votes={option.votes}
+                  onPollOptionVote={handlePollOptionVoteSend}
+                />
+              ))
+            : null}
+        </section>
+        <section className="card-footer border-top-0 bg-white">
           <div className="d-flex mb-3 gap-4">
             <div
               onClick={handlePostLike}
@@ -317,7 +381,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
               })}
             </div>
           </div>
-        </div>
+        </section>
       </div>
     )
   );

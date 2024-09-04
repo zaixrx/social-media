@@ -1,6 +1,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { getToken, setToken } from "../utils/token";
+import { showMessage } from "../utils/logging";
 
 const API_ENDPOINT = `${process.env.REACT_APP_API_URL}/users/`;
 
@@ -28,16 +29,18 @@ export function getCurrentUser() {
   return {};
 }
 
-export function regenerateAuthToken() {
+export async function regenerateAuthToken() {
   const authToken = getToken();
-  if (!authToken) return null;
+  if (!authToken) return;
+
   try {
-    return axios.post(API_ENDPOINT + "token", { authToken });
-  } catch (error) {
-    if (error.response) {
-      console.log("Invalid server response", error.response.data);
-    }
-    alert(error.message);
+    const { regenerationToken } = jwtDecode(authToken);
+    const { data: newToken } = await axios.post(API_ENDPOINT + "token", {
+      regenerationToken,
+    });
+    return newToken;
+  } catch ({ response, message }) {
+    showMessage("Cant regenerate token: ", response ? response.data : message);
   }
 }
 

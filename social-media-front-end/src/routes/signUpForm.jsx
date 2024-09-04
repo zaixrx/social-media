@@ -108,6 +108,8 @@ function SignUpForm() {
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (currentPageIndex >= pages.length) return;
+
     const currentPage = pages[currentPageIndex];
     const schema = currentPage.schema;
 

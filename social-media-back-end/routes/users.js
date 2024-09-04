@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth.js");
 const upload = require("../middleware/upload.js");
 const validateObjectId = require("../middleware/validateObjectId.js");
@@ -12,7 +11,12 @@ router.get(
   "/",
   asyncMiddleware(async (req, res) => {
     const query = req.headers["x-query"];
-    if (!query) return res.status(400).send("Query is undefined.");
+    if (!query)
+      return error(
+        res,
+        404,
+        "You must provide a query to preform this operation."
+      );
 
     const users = await User.find({
       username: { $regex: query, $options: "i" },
@@ -30,8 +34,8 @@ router.get(
   asyncMiddleware(async (req, res) => {
     const user = await User.findById(req.params._id)
       .populate("posts", "-__v")
-      .select("-password");
-    if (!user) return res.status(404).send("User is not found.");
+      .select("-avatarCloudID -email -password");
+    if (!user) return error(res, 404, "User doesn't exist");
     res.send(user);
   })
 );
@@ -42,28 +46,17 @@ router.post(
     const { body } = req;
     const { error } = userJoiSchema.validate(body);
 
-    if (error)
-      return res
-        .status(400)
-        .header("x-error-path", "username")
-        .header("access-control-expose-headers", "x-error-path")
-        .send(error.details[0].message);
+    if (error) return error(res, 400, error.details[0].message);
 
-    const u = await User.findOne({ email: body.email });
-    if (u)
-      return res
-        .status(400)
-        .header("x-error-path", "email")
-        .header("access-control-expose-headers", "x-error-path")
-        .send("Email is taken.");
+    const userWithTheSameEmail = await User.findOne({ email: body.email });
+    if (userWithTheSameEmail)
+      return error(res, 400, "This Email is already in use.");
 
-    const u1 = await User.findOne({ username: body.username });
-    if (u1)
-      return res
-        .status(400)
-        .header("x-error-path", "username")
-        .header("access-control-expose-headers", "x-error-path")
-        .send("Username is taken.");
+    const userWithTheSameUsername = await User.findOne({
+      username: body.username,
+    });
+    if (userWithTheSameUsername)
+      return error(res, 400, "This Name is already in use.");
 
     const salt = await bcrypt.genSalt(10);
     const password = await bcrypt.hash(body.password, salt);
@@ -76,6 +69,8 @@ router.post(
       password: password,
       avatarPath: process.env.DEFAULT_AVATAR_PATH,
     });
+    user.regenerationToken = user.generateRegenerationToken();
+
     await user.save();
 
     const token = await user.generateAuthToken();
@@ -89,17 +84,13 @@ router.post(
 router.post(
   "/token",
   asyncMiddleware(async (req, res) => {
-    const providedToken = req.body.authToken;
-    if (!providedToken)
-      return res
-        .status(401)
-        .send("You must provide a token in order to regenerate it.");
+    const providedRegenerationToken = req.body.regenerationToken;
+    if (!providedRegenerationToken)
+      return error(res, 401, "You must provide the regeneration token.");
 
-    const payload = jwt.decode(providedToken);
-    if (!payload) return res.status(400).send("Token is not valid.");
-
-    const user = await User.findById(payload._id);
-    if (!user) return res.status(400).send("Token is not valid.");
+    const userID = providedRegenerationToken.split("/+/")[1];
+    const user = await User.findById(userID);
+    if (!user) return error(res, 400, "Invalid regeneration token.");
 
     const token = await user.generateAuthToken();
     res.send(token);
@@ -222,7 +213,7 @@ router.put(
         break;
 
       default:
-        return res.status(400).send("You must provide a request type.");
+        return error(res, 400, "You must provide a request type.");
     }
 
     const token = await returnedUser.generateAuthToken();
@@ -246,5 +237,9 @@ router.post(
     return res.send(true);
   })
 );
+
+function error(res, statusCode, message) {
+  res.status(statusCode).send(message);
+}
 
 module.exports = router;

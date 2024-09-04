@@ -68,6 +68,24 @@ export async function sendCommentEditRequest(comment, _id, _postId, token) {
   );
 }
 
+export async function sendPollVoteRequest(
+  postId,
+  pollOptionId,
+  pollOptionVoteValue,
+  token
+) {
+  return await axios.put(
+    apiEndpoint + postId,
+    { pollOptionId, pollOptionVoteValue },
+    {
+      headers: {
+        "x-auth-token": token,
+        "x-type": "poll-option-vote",
+      },
+    }
+  );
+}
+
 export async function sendCommentDeleteRequest(_id, _postId, token) {
   return await axios.delete(apiEndpoint + _postId, {
     headers: {

@@ -11,7 +11,7 @@ function PopUp({
   return (
     modalId && (
       <div className="modal fade" id={modalId}>
-        <div className="modal-dialog">
+        <div className="modal-dialog modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
               <h1 className="modal-title fs-5">{headerLabel}</h1>

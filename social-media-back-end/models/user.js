@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
+Joi.objectId = require("joi-objectid")(Joi);
 const config = require("config");
 const jwt = require("jsonwebtoken");
+const { nanoid } = require("nanoid");
 const { Post } = require("./post");
 
 const userSchema = new mongoose.Schema({
@@ -51,7 +53,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  regenerationToken: {
+    type: String,
+    required: true,
+  },
 });
+
+userSchema.methods.generateRegenerationToken = function () {
+  return `${nanoid()}/+/${this._id}`;
+};
 
 userSchema.methods.generateAuthToken = async function () {
   const posts = [];
@@ -73,6 +83,7 @@ userSchema.methods.generateAuthToken = async function () {
       following: this.following,
       role: this.role,
       bio: this.bio,
+      regenerationToken: this.regenerationToken,
     },
     config.get("jwtPrivateKey"),
     { noTimestamp: true }

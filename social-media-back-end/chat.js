@@ -7,7 +7,7 @@ const availabeFileTypes = ["image", "video"];
 module.exports = function (server) {
   const io = require("socket.io")(server, {
     cors: {
-      origin: "*",
+      origin: process.env.CLIENT_ORIGIN,
     },
     maxHttpBufferSize: 2e7,
   });

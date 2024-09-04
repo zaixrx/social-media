@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 export function showMessage(...messages) {
   let fullMessage = messages[0];
 
@@ -5,5 +7,7 @@ export function showMessage(...messages) {
     fullMessage += ` ${messages[i]}`;
   }
 
-  alert(fullMessage);
+  toast.error(fullMessage, {
+    duration: 3000,
+  });
 }

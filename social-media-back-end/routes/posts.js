@@ -18,7 +18,8 @@ router.get(
   "/",
   asyncMiddleware(async (req, res) => {
     const posts = await Post.find()
-      .populate("user", "-password -email")
+      .select("-__v")
+      .populate("user", "_id username avatarPath")
       .sort("-publishDate");
     return res.send(posts);
   })
@@ -30,7 +31,12 @@ router.post(
   asyncMiddleware(async (req, res) => {
     const { body, file, user } = req;
 
+    body.pollOptions = body.pollOptions.split(",");
+
     if (!validatePost(body, res)) return;
+
+    const postCreatorUser = await User.findById(user._id);
+    if (!postCreatorUser) return error(res, 404, "User doesn't exist");
 
     const post = new Post({
       user: user._id,
@@ -38,13 +44,17 @@ router.post(
       publishDate: new Date(),
     });
 
-    // I might implement a transaction for this later (You won't)
-    // But for now this will work
-    const dbUser = await User.findById(user._id);
-    if (!dbUser) return res.status(404).send("User doesn't exist");
-
     try {
-      if (file) {
+      if (body.pollOptions) {
+        let pollOptions = [];
+        body.pollOptions.forEach((option) => {
+          pollOptions.push({
+            label: option,
+            votes: [],
+          });
+        });
+        post.pollOptions = pollOptions;
+      } else if (file) {
         const b64 = Buffer.from(file.buffer).toString("base64");
         const dataURI = `data:${file.mimetype};base64,${b64}`;
         const { secure_url: url, public_id: imageCloudID } =
@@ -54,8 +64,8 @@ router.post(
       }
 
       await post.save();
-      dbUser.posts.push(post);
-      await dbUser.save();
+      postCreatorUser.posts.push(post);
+      await postCreatorUser.save();
 
       res.send(post);
     } catch ({ message, response }) {
@@ -68,10 +78,9 @@ router.get(
   "/:_id",
   validateObjectId,
   asyncMiddleware(async (req, res) => {
-    const post = await Post.findById(req.params._id).populate(
-      "user",
-      "-password -email"
-    );
+    const post = await Post.findById(req.params._id)
+      .select("-__v")
+      .populate("user", "_id username avatarPath");
 
     if (!post)
       return res
@@ -188,6 +197,41 @@ router.put(
         res.send(like);
         break;
 
+      case "poll-option-vote":
+        const pollOptionID = body.pollOptionId;
+        if (!pollOptionID)
+          return error(res, 400, "You must provide a valid pollID");
+
+        const pollOption = post.pollOptions.find(
+          (po) => po._id.toString() === pollOptionID
+        );
+        if (!pollOption)
+          return error(
+            res,
+            400,
+            "The provided id doesn't refrence any poll option"
+          );
+
+        const voteValue = body.pollOptionVoteValue;
+        const { votes } = pollOption;
+
+        if (voteValue) {
+          if (votes.includes(user._id))
+            return error(res, 400, "You are already voting for this option");
+          votes.push(user._id);
+        } else {
+          const index = votes.indexOf(user._id);
+          if (index === -1)
+            return error(
+              res,
+              400,
+              "You can't unvote this option, you are not voting on it"
+            );
+          votes.splice(index, 1);
+        }
+        res.send(votes);
+        break;
+
       default:
         return error(res, 400, `Invalid request type: ${type}`);
     }
@@ -249,17 +293,17 @@ router.delete(
         break;
 
       case "post":
-        if (post.user.toString() !== user._id)
+        const isOwner = user._id === post.user.toString();
+        if (!isOwner)
           return error(res, 403, "Only the owner can delete this Post.");
 
-        const postUser = await User.findById(user._id);
-        if (!postUser) return error("The post's owner doesn't exists");
+        const creatorUser = await User.findById(user._id);
+        if (!creatorUser) return error("The post's creator doesn't exist");
 
-        // post.deleteOne() removes this document from the database(Posts collection)
-        await post.deleteOne();
-        _.pull(postUser.posts, post._id);
-        await postUser.save();
         if (post.imagePath) await handleFileDelete(post.imageCloudID);
+        creatorUser.posts.splice(creatorUser.posts.indexOf(post._id), 1);
+        await post.deleteOne();
+        await creatorUser.save();
         break;
 
       default:

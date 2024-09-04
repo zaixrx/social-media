@@ -5,6 +5,7 @@ import Friends from "../components/friendsBar.jsx";
 import SharePost from "../components/sharePost.jsx";
 import { getPosts } from "../services/posts.js";
 import EditPost from "../components/editPost.jsx";
+import { Toaster } from "sonner";
 import { showMessage } from "../utils/logging.js";
 
 function Home({ user, setIsLoading }) {
@@ -55,6 +56,7 @@ function Home({ user, setIsLoading }) {
 
   return (
     <>
+      <Toaster richColors className="me-5" />
       <EditPost
         user={user}
         getDataReference={getDataReference}

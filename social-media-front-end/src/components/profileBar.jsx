@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Paragpragh from "../common/Paragraph";
 
 function ProfileBar({ user }) {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ function ProfileBar({ user }) {
           className="avatar rounded-circle mb-1"
         />
         <h5>@{user.username}</h5>
-        <p>{user.bio ? user.bio : `A ${user.role}`}</p>
+        <Paragpragh>{user.bio ? user.bio : `A ${user.role}`}</Paragpragh>
       </div>
     </div>
   );
