@@ -112,7 +112,6 @@ function Post({ currentUser, user, post, onPostEdit, fetchHomeData }) {
       setCurrentCommentParent({});
       commentInput.current.value = "";
     } catch ({ response, message }) {
-      fetchHomeData(false);
       showMessage(response?.data || message);
     }
   }
