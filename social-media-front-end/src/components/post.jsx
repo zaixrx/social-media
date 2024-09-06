@@ -23,7 +23,7 @@ import Comment from "./comment";
 import Image from "../common/Image";
 import Paragpragh from "../common/Paragraph";
 
-function Post({ currentUser, user, post, onPostEdit }) {
+function Post({ currentUser, user, post, onPostEdit, fetchHomeData }) {
   const [likes, setLikes] = useState({ liked: false, count: "" });
   const [comments, setComments] = useState([]);
   const [pollOptions, setPollOptions] = useState([]);
@@ -40,7 +40,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
         _pollOptions.map((po) => {
           return {
             _id: po._id,
-            checked: po.votes.includes(user._id),
+            checked: po.votes.includes(currentUser._id),
             label: po.label,
             votes: po.votes,
             percentage: (po.votes.length * 100) / totalVotes,
@@ -112,7 +112,8 @@ function Post({ currentUser, user, post, onPostEdit }) {
       setCurrentCommentParent({});
       commentInput.current.value = "";
     } catch ({ response, message }) {
-      showMessage("Failed to send message", response?.data || message);
+      fetchHomeData(false);
+      showMessage(response?.data || message);
     }
   }
 
@@ -157,8 +158,7 @@ function Post({ currentUser, user, post, onPostEdit }) {
       return c._id === _id;
     });
 
-    if (!commentToDelete)
-      return showMessage("(Comment[]).Contains(comment) => false");
+    if (!commentToDelete) return showMessage("Comment doesn't exist");
 
     await sendCommentDeleteRequest(_id, post._id, getToken());
     const _comments = [...comments];

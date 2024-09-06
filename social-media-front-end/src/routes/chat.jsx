@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { ObjectId } from "bson";
 import {
   sendMessageDeleteRequest,
   sendMessageRequest,
@@ -60,15 +61,29 @@ function Chat({ user, setIsLoading }) {
   }
 
   function handleMessageReceive(message) {
-    setMessages((_messages) => [..._messages, message]);
+    setMessages((messages) => {
+      const _messages = [...messages];
+
+      message.sent = true;
+      let predictedMessage = _messages.find((m) => m._id === message._id);
+      if (predictedMessage) {
+        _messages[_messages.indexOf(predictedMessage)] = message;
+      } else {
+        _messages.push(message);
+      }
+
+      return _messages;
+    });
   }
 
   function handleMessageDeleteReceive(messageID) {
     setMessages((messages) => {
-      const message = messages.filter((message) => message._id === messageID);
-      if (!message) return;
       const _messages = [...messages];
-      _messages.splice(_messages.indexOf(message), 1);
+      const message = _messages.filter((message) => message._id === messageID);
+      setReply((reply) => {
+        return messageID === reply?._id ? null : reply;
+      });
+      console.log(_messages.splice(_messages.indexOf(message), 1));
       return _messages;
     });
   }
@@ -111,16 +126,36 @@ function Chat({ user, setIsLoading }) {
     });
   }
 
+  function pushPredictedMessage(desiredID, messageValue, root, files) {
+    const message = {
+      _id: desiredID,
+      value: messageValue,
+      root,
+      files: files.map((file) => {
+        return {
+          path: getFileUrl(file.data),
+          type: file.type,
+        };
+      }),
+      sender: user,
+      date: new Date(),
+      sent: false,
+    };
+
+    const _messages = [...messages, message];
+    setMessages(_messages);
+  }
+
   async function handleMessageSend() {
     const message = messageInput.current.value;
     if (!message.trim() && !files.length) return;
     files.forEach((file) => delete file.url);
-    await sendMessageRequest(message, reply?._id, files);
-
-    // reset
     messageInput.current.value = "";
     setFiles([]);
     setReply(null);
+    const desiredID = new ObjectId().toString();
+    pushPredictedMessage(desiredID, message, reply?._id, files);
+    await sendMessageRequest(desiredID, message, reply?._id, files);
   }
 
   async function handleMessageDeleteSend(messageID) {
@@ -141,7 +176,6 @@ function Chat({ user, setIsLoading }) {
     messageInput.current.focus();
   }
 
-  // TODO: Fix this after adding more than 4 files feature
   function addFiles(newFiles) {
     const { REACT_APP_MAX_FILES, REACT_APP_MAX_FILE_SIZE_IN_MB } = process.env;
     if (files.length > REACT_APP_MAX_FILES) return;
@@ -207,9 +241,9 @@ function Chat({ user, setIsLoading }) {
             </div>
           </div>
           <div className="card-body">
-            {messages?.map((message) => (
+            {messages?.map((message, index) => (
               <Message
-                key={message._id}
+                key={message._id || index}
                 isOwner={message.sender._id === user._id}
                 message={message}
                 onMessageDelete={handleMessageDeleteSend}

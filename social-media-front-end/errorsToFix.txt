@@ -1,7 +1,8 @@
-// TODO: fix the null posts bug => Done
-// TODO: don't send unneeded data about the user => Done + refactoring + protecting user information
-// TODO: fix last submit step signup => Done
-// TODO: fix cors by not allowing everyone to use my api  => Done
-// TODO: fix the bug of delete then reply => Done
-// TODO: add polls => Done
-// TODO: add the ability to send videos through posts => maybe no
+// TODO: fix vote auto on => Done
+// TODO: fix when message or comment are deleted you can reply to them => Done
+// TODO: add client prediction when videos and photos are sent => Done
+// TODO: messages get sent twice => No they don't
+// TODO: add an easy way for people to make accounts or inspect the website as guests => No
+// TODO: add password recovery => No
+
+// TODO: chat is so buggy fix it => Invetigate Later

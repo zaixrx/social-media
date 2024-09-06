@@ -57,6 +57,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  notifications: [
+    {
+      from: mongoose.Schema.ObjectId,
+      text: String, 
+    },
+  ],
 });
 
 userSchema.methods.generateRegenerationToken = function () {

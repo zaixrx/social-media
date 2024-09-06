@@ -124,7 +124,11 @@ router.put(
           );
 
           if (!commentParent) {
-            return res.status(404).send("Parent message does not exist");
+            return error(
+              res,
+              404,
+              "The comment you are replying to has been deleted, Try to refresh the page to resolve this issue"
+            );
           }
 
           comment.parent = commentParent._id;
@@ -140,10 +144,10 @@ router.put(
           (c) => c._id.toString() === _commentID
         );
 
-        if (!_comment) return res.status(404).send("Comment does not exists.");
+        if (!_comment) return error(res, 404, "Comment does not exists.");
 
         if (_comment.user._id.toString() !== req.user._id)
-          return res.status(403).send("Only the Owner can edit this Comment.");
+          return error(res, 403, "Only the Owner can edit this Comment.");
 
         if (!commentValidate(body, res)) return;
 
@@ -157,7 +161,7 @@ router.put(
         const isOwner = user._id === post.user._id.toString();
 
         if (!isOwner)
-          return res.status(400).send("Only the Owner can edit this Post.");
+          return error(res, 403, "Only the Owner can edit this Post.");
         if (!validatePost(body, res)) return;
 
         if (file) {

@@ -107,7 +107,14 @@ module.exports = function (server) {
 
     socket.on(
       "message",
-      async (messageValue, senderID, roomID, messageRootID, messageFiles) => {
+      async (
+        desiredID,
+        messageValue,
+        senderID,
+        roomID,
+        messageRootID,
+        messageFiles
+      ) => {
         if (!roomID) return error("The Room Id is undefined.");
 
         const room = await getRoom(roomID);
@@ -125,6 +132,7 @@ module.exports = function (server) {
         // I did this to let the mongodb driver generate the message _id.
         const messageIndex =
           room.messages.push({
+            _id: desiredID,
             root: messageRootID,
             sender: senderID,
             value: messageValue,
@@ -146,24 +154,6 @@ module.exports = function (server) {
               type: file.type,
               cloudID: fileCloudID,
             });
-            /*
-            const fileName = `${message._id}_${i}.${file.extension}`;
-
-            const directoryCreatedSuccessfully = createFile(
-              file.data,
-              fileName,
-              `./public/chat/${room._id}/`,
-              error
-            );
-
-            if (!directoryCreatedSuccessfully && !messageValue.trim())
-              return console.log(directoryCreatedSuccessfully);
-
-            message.files.push({
-              path: `${process.env.PROTOCOL}://${process.env.HOST_NAME}/chat/${room_id}/${fileName}`,
-              type: file.type,
-            });
-*/
           }
         }
 

@@ -14,7 +14,6 @@ function Message({
   onReply,
 }) {
   const [editMode, setEditMode] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   const editInput = useRef();
 
   function toggleEditMode() {
@@ -40,11 +39,7 @@ function Message({
 
   return (
     <div className="d-flex justify-content-end text-end mb-2">
-      <div
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-        className="w-100"
-      >
+      <div className="w-100">
         <div
           className={`d-flex flex-column gap-1 ${
             isOwner ? "align-items-end" : "align-items-start"
@@ -138,22 +133,26 @@ function Message({
               }
             })}
           </div>
-          <EmojieReactionList
-            style={{
-              display: editMode ? "none" : "flex",
-              marginTop: -15,
-            }}
-            message={message}
-            direction={isOwner ? "L" : "R"}
-          />
-          <ReactionList
-            isVisible
-            isOwner={isOwner}
-            onReply={() => onReply(message)}
-            onEmojiSelected={(emoji) => onEmojiSelected(message._id, emoji)}
-            onMessageDelete={() => onMessageDelete(message._id)}
-            onEditModeTriggered={toggleEditMode}
-          />
+          {message.sent && (
+            <>
+              <EmojieReactionList
+                style={{
+                  display: editMode ? "none" : "flex",
+                  marginTop: -15,
+                }}
+                message={message}
+                direction={isOwner ? "L" : "R"}
+              />
+              <ReactionList
+                isVisible
+                isOwner={isOwner}
+                onReply={() => onReply(message)}
+                onEmojiSelected={(emoji) => onEmojiSelected(message._id, emoji)}
+                onMessageDelete={() => onMessageDelete(message._id)}
+                onEditModeTriggered={toggleEditMode}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>

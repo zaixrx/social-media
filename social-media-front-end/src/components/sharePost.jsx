@@ -46,7 +46,7 @@ function SharePost({ user, onNewPost, setIsLoading }) {
 
   return (
     <>
-      <PollManager onSubmit={handlePollSubmition} />
+      <PollManager onpSubmit={handlePollSubmition} />
       <form onSubmit={handleFormSubmit} className="card p-3 d-flex gap-2">
         <div className="d-flex">
           <img

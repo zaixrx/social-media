@@ -25,16 +25,21 @@ function Home({ user, setIsLoading }) {
   // Me-1: 120541893
   // Me-2: 100060675124730007
 
-  useEffect(() => {
-    setIsLoading(true);
+  function fetchHomeData(withLoading = true) {
+    if (withLoading) setIsLoading(true);
     try {
       getPosts().then(({ data: _posts }) => {
         setPosts(_posts);
-        setIsLoading(false);
+
+        if (withLoading) setIsLoading(false);
       });
     } catch ({ response, message }) {
       showMessage(response ? response.data : message);
     }
+  }
+
+  useEffect(() => {
+    fetchHomeData();
   }, []);
 
   // Frick react
@@ -49,7 +54,7 @@ function Home({ user, setIsLoading }) {
     if (!asyncFunctionReference) return;
     asyncFunctionReference(post).catch((error) =>
       showMessage(
-        `Internal Application Error: ${error.message}\nPlease report this bug to my discord account <bold>zaizr</bold>`
+        `Internal Application Error: ${error.message}\nPlease report this bug to my discord account "zaizr"`
       )
     );
   }
@@ -83,6 +88,7 @@ function Home({ user, setIsLoading }) {
                   currentUser={user}
                   user={post.user}
                   post={post}
+                  fetchHomeData={fetchHomeData}
                   onPostEdit={handlePostEdit}
                 />
               );

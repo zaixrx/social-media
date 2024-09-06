@@ -30,6 +30,7 @@ export function start(
       room = _room;
       room.messages.forEach((message) => {
         message = prepareMessage(message);
+        message.sent = true;
       });
       roomReceiveHandler(_room);
     });
@@ -64,9 +65,22 @@ export async function sendDemandRoomRequest(members) {
   await socket.emit("demand-room", members, serverSocketID);
 }
 
-export async function sendMessageRequest(message, rootMessage, files) {
+export async function sendMessageRequest(
+  desiredID,
+  message,
+  rootMessage,
+  files
+) {
   if ((!message.trim() && !files.length) || !socket || !room) return;
-  await socket.emit("message", message, userID, room._id, rootMessage, files);
+  await socket.emit(
+    "message",
+    desiredID,
+    message,
+    userID,
+    room._id,
+    rootMessage,
+    files
+  );
 }
 
 export async function sendMessageDeleteRequest(messageID) {
