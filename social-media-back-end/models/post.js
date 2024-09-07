@@ -7,7 +7,7 @@ const postJoiSchema = Joi.object({
   image: Joi.any(),
   caption: Joi.string().allow(""),
   publishDate: Joi.date(),
-  pollOptions: Joi.array().items(Joi.string()),
+  pollOptions: Joi.array().items(Joi.string().allow("")),
   like: Joi.boolean(),
 });
 

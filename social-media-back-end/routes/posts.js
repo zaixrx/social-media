@@ -30,8 +30,8 @@ router.post(
   [auth, upload.single("image")],
   asyncMiddleware(async (req, res) => {
     const { body, file, user } = req;
-
     body.pollOptions = body.pollOptions.split(",");
+    if (!body.pollOptions[0]) body.pollOptions = [];
 
     if (!validatePost(body, res)) return;
 
@@ -45,7 +45,7 @@ router.post(
     });
 
     try {
-      if (body.pollOptions) {
+      if (body.pollOptions.length) {
         let pollOptions = [];
         body.pollOptions.forEach((option) => {
           pollOptions.push({
