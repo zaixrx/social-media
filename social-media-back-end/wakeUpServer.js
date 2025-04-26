@@ -8,5 +8,5 @@ module.exports = function () {
       .catch(({ message, response }) =>
         console.error(response ? response : message)
       );
-  }, 1000 * 60 * 5);
+  }, 1000 * 60 * 10);
 };
